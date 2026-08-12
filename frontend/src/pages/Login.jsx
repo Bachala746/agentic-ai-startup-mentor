@@ -1,7 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import React, { useState } from 'react';
 import './Login.css';
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,7 +34,7 @@ export default function Login() {
     // Simulate backend authentication request
     setTimeout(() => {
       setIsLoading(false);
-      alert('Login successful! Redirecting to dashboard...');
+      navigate("/dashboard");
     }, 1500);
   };
 
