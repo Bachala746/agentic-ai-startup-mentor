@@ -261,7 +261,15 @@ export default function Signup() {
               </form>
 
               <div className="card-footer-action">
-                <p>Already have an account? <a href="#login" className="signin-link">Sign In</a></p>
+                <p>Already have an account? 
+                  <button
+                    type="button"
+                    className="signin-link"
+                    onClick={() => navigate("/login")}
+                  >
+                    Sign In
+                  </button>
+                </p>
               </div>
             </div>
           </div>
