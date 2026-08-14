@@ -7,7 +7,7 @@ export default function Dashboard() {
     <div>
       <h1>Dashboard Page</h1>
 
-      <button onClick={() => navigate("/home")}>
+      <button onClick={() => navigate("/")}>
         Go to Startup Mentor
       </button>
     </div>
