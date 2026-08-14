@@ -192,9 +192,13 @@ export default function Login() {
 
               <div className="card-footer-action">
                 <p>Don't have an account yet?</p>
-                <a href="#signup" className="btn-secondary-action">
-                  Create New Account
-                </a>
+                    <button
+                      type="button"
+                      className="btn-secondary-action"
+                      onClick={() => navigate("/signup")}
+                    >
+                      Create New Account
+                    </button>
               </div>
             </div>
           </div>

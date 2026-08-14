@@ -7,7 +7,7 @@ export default function Profile() {
     <div>
       <h1>Profile Page</h1>
 
-      <button onClick={() => navigate("/")}>
+      <button onClick={() => navigate("/home")}>
         Back to Startup Mentor
       </button>
     </div>
