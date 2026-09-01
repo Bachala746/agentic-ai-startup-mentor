@@ -1,98 +1,152 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Profile.css";
 
 export default function Profile() {
   const navigate = useNavigate();
 
+  const [profile, setProfile] = useState({
+    fullName: "Founder",
+    skills: "",
+    interests: "",
+    experience: "",
+    budget: "",
+    goals: "",
+  });
+
+  const [saved, setSaved] = useState(false);
+
+  const handleChange = (e) => {
+    setProfile({
+      ...profile,
+      [e.target.name]: e.target.value,
+    });
+    setSaved(false);
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+
+    localStorage.setItem("founderProfile", JSON.stringify(profile));
+    setSaved(true);
+  };
+
   return (
     <div className="profile-page">
-
       <div className="profile-container">
 
         {/* Header */}
         <div className="profile-header">
           <button
             className="back-button"
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/dashboard")}
           >
-            ← Back to Startup Mentor
+            ← Back to Dashboard
           </button>
 
           <h1>Founder Profile</h1>
-          <p>Manage your startup mentor profile and preferences.</p>
+          <p>
+            Tell us about yourself so your AI mentor can personalize your
+            startup guidance.
+          </p>
         </div>
 
-        {/* Profile Card */}
-        <div className="profile-card">
+        {/* Profile Form */}
+        <form className="profile-card" onSubmit={handleSave}>
 
-          <div className="profile-avatar">
-            👤
+          <div className="profile-avatar">👤</div>
+
+          <h2>Founder Information</h2>
+
+          {/* Full Name */}
+          <div className="profile-field">
+            <label>Full Name</label>
+            <input
+              type="text"
+              name="fullName"
+              value={profile.fullName}
+              onChange={handleChange}
+              placeholder="Enter your name"
+            />
           </div>
 
-          <h2>Founder</h2>
-          <p className="profile-role">Startup Explorer</p>
-
-          <div className="profile-details">
-
-            <div className="profile-detail">
-              <span>Full Name</span>
-              <strong>Founder</strong>
-            </div>
-
-            <div className="profile-detail">
-              <span>Role</span>
-              <strong>Startup Founder</strong>
-            </div>
-
-            <div className="profile-detail">
-              <span>Preferred Mentor</span>
-              <strong>Strategy Mentor</strong>
-            </div>
-
-            <div className="profile-detail">
-              <span>Account Status</span>
-              <strong className="status">● Active</strong>
-            </div>
-
+          {/* Skills */}
+          <div className="profile-field">
+            <label>Skills</label>
+            <textarea
+              name="skills"
+              value={profile.skills}
+              onChange={handleChange}
+              placeholder="Example: Python, AI, Marketing, Design"
+            />
           </div>
 
-        </div>
-
-        {/* Startup Stats */}
-        <div className="profile-section">
-
-          <h2>Your Startup Journey</h2>
-
-          <div className="profile-stats">
-
-            <div className="stat-card">
-              <span>💡</span>
-              <strong>0</strong>
-              <p>Startup Ideas</p>
-            </div>
-
-            <div className="stat-card">
-              <span>📁</span>
-              <strong>0</strong>
-              <p>Saved Plans</p>
-            </div>
-
-            <div className="stat-card">
-              <span>🤖</span>
-              <strong>0</strong>
-              <p>AI Sessions</p>
-            </div>
-
+          {/* Interests */}
+          <div className="profile-field">
+            <label>Interests</label>
+            <textarea
+              name="interests"
+              value={profile.interests}
+              onChange={handleChange}
+              placeholder="Example: AI, Education, Healthcare, Finance"
+            />
           </div>
 
-        </div>
+          {/* Experience */}
+          <div className="profile-field">
+            <label>Experience</label>
+            <textarea
+              name="experience"
+              value={profile.experience}
+              onChange={handleChange}
+              placeholder="Describe your education, work, or project experience"
+            />
+          </div>
 
-        {/* Actions */}
+          {/* Budget */}
+          <div className="profile-field">
+            <label>Startup Budget</label>
+            <select
+              name="budget"
+              value={profile.budget}
+              onChange={handleChange}
+            >
+              <option value="">Select your budget</option>
+              <option value="No Budget">No Budget</option>
+              <option value="Under ₹10,000">Under ₹10,000</option>
+              <option value="₹10,000 - ₹50,000">₹10,000 - ₹50,000</option>
+              <option value="₹50,000 - ₹1 Lakh">₹50,000 - ₹1 Lakh</option>
+              <option value="Above ₹1 Lakh">Above ₹1 Lakh</option>
+            </select>
+          </div>
+
+          {/* Startup Goals */}
+          <div className="profile-field">
+            <label>Startup Goals</label>
+            <textarea
+              name="goals"
+              value={profile.goals}
+              onChange={handleChange}
+              placeholder="Example: Build an MVP, validate my idea, launch a startup"
+            />
+          </div>
+
+          {/* Save */}
+          <button type="submit" className="save-profile-button">
+            💾 Save Founder Profile
+          </button>
+
+          {saved && (
+            <p className="profile-success">
+              ✓ Profile saved successfully!
+            </p>
+          )}
+
+        </form>
+
+        {/* Navigation */}
         <div className="profile-actions">
-
-          <button
-            onClick={() => navigate("/dashboard")}
-          >
+          <button onClick={() => navigate("/dashboard")}>
             🚀 Go to Dashboard
           </button>
 
@@ -102,11 +156,9 @@ export default function Profile() {
           >
             🚪 Logout
           </button>
-
         </div>
 
       </div>
-
     </div>
   );
 }

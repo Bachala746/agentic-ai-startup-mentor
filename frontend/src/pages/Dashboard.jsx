@@ -1,22 +1,47 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
+  const [founderProfile, setFounderProfile] = useState(null);
   const [startupIdea, setStartupIdea] = useState("");
   const [selectedMentor, setSelectedMentor] = useState("Strategy Mentor");
-  const [isGenerated, setIsGenerated] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const [chatMessage, setChatMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([
     {
-      sender: "AI Mentor",
-      text: "Welcome, Founder! Tell me about your startup idea and let's build it together."
+      sender: "AI",
+      text: "Hi Founder! I'm ready to help you build your startup."
     }
   ]);
+
+  useEffect(() => {
+    const savedProfile = localStorage.getItem("founderProfile");
+
+    if (savedProfile) {
+      setFounderProfile(JSON.parse(savedProfile));
+    }
+  }, []);
+
+  const mentors = [
+    {
+      name: "Strategy Mentor",
+      icon: "🎯",
+      description: "Business strategy & market planning"
+    },
+    {
+      name: "Pitch Deck Coach",
+      icon: "📊",
+      description: "Pitch preparation & investor guidance"
+    },
+    {
+      name: "Tech Architect",
+      icon: "⚙️",
+      description: "Technology & product architecture"
+    }
+  ];
 
   const handleGenerate = (e) => {
     e.preventDefault();
@@ -26,12 +51,7 @@ export default function Dashboard() {
       return;
     }
 
-    setLoading(true);
-
-    setTimeout(() => {
-      setLoading(false);
-      setIsGenerated(true);
-    }, 700);
+    alert("Founder profile + startup idea will be sent to the AI agents next.");
   };
 
   const handleSendMessage = (e) => {
@@ -41,351 +61,238 @@ export default function Dashboard() {
 
     setChatHistory((prev) => [
       ...prev,
-      { sender: "You", text: chatMessage }
+      {
+        sender: "You",
+        text: chatMessage
+      },
+      {
+        sender: "AI",
+        text: `I'll help you with that as your ${selectedMentor}.`
+      }
     ]);
 
     setChatMessage("");
-
-    setTimeout(() => {
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          sender: "AI Mentor",
-          text: `That's an interesting direction. Your ${selectedMentor.toLowerCase()} can help validate "${startupIdea}".`
-        }
-      ]);
-    }, 500);
   };
 
   return (
     <div className="dashboard-page">
-
-      {/* Sidebar */}
-      <aside className="dashboard-sidebar">
-
-        <div className="sidebar-logo">
-          <div className="logo-icon">🚀</div>
-          <div>
-            <h2>AI Startup Mentor</h2>
-            <span>Founder Workspace</span>
-          </div>
-        </div>
-
-        <nav className="sidebar-nav">
-
-          <button className="nav-item active">
-            <span>💡</span>
-            Startup Workspace
-          </button>
-
-          <button className="nav-item">
-            <span>📁</span>
-            Saved Plans
-          </button>
-
-          <button className="nav-item">
-            <span>📊</span>
-            Agent Insights
-          </button>
-
-          <button
-            className="nav-item"
-            onClick={() => navigate("/profile")}
-          >
-            <span>⚙️</span>
-            User Profile
-          </button>
-
-        </nav>
-
-        <button
-          className="logout-button"
-          onClick={() => navigate("/login")}
-        >
-          🚪 Logout
-        </button>
-
-      </aside>
-
-
-      {/* Main Content */}
-      <main className="dashboard-main">
+      <div className="dashboard-container">
 
         {/* Header */}
         <header className="dashboard-header">
-
           <div>
-            <h1>Startup Command Center</h1>
-            <p>Turn your idea into an actionable startup roadmap.</p>
+            <h2>🚀 AI Startup Mentor</h2>
+            <span>Founder Workspace</span>
           </div>
 
-          <div className="header-actions">
-
-            <div className="agent-status">
-              <span className="status-dot"></span>
-              Agent Online
-            </div>
-
-            <button
-              className="profile-button"
-              onClick={() => navigate("/profile")}
-            >
-              Founder Mode
+          <div className="dashboard-nav">
+            <button onClick={() => navigate("/home")}>
+              Home
             </button>
 
+            <button onClick={() => navigate("/profile")}>
+              Profile
+            </button>
+
+            <button
+              className="logout-btn"
+              onClick={() => navigate("/login")}
+            >
+              Logout
+            </button>
           </div>
-
         </header>
-
 
         {/* Welcome */}
         <section className="welcome-card">
-
           <div>
-            <span className="welcome-label">YOUR AI CO-FOUNDER</span>
+            <span className="welcome-label">
+              YOUR AI CO-FOUNDER
+            </span>
 
-            <h2>
-              What are we building today?
-            </h2>
+            <h1>
+              Welcome back,{" "}
+              {founderProfile?.fullName || "Founder"} 👋
+            </h1>
 
             <p>
-              Describe your startup idea and choose the AI mentor
-              that will guide your next steps.
+              Turn your idea into a personalized startup plan.
             </p>
           </div>
 
+          <div className="status">
+            <span></span>
+            AI Mentor Online
+          </div>
         </section>
 
-
-        {/* Idea Builder */}
-        <section className="builder-card">
-
-          <div className="section-title">
-            <span className="step-number">01</span>
-
+        {/* Founder information summary */}
+        {founderProfile && (
+          <section className="founder-summary">
             <div>
-              <h3>Describe your startup idea</h3>
-              <p>Give your idea in simple words. You can refine it later.</p>
-            </div>
-          </div>
-
-          <textarea
-            className="idea-input"
-            value={startupIdea}
-            onChange={(e) => setStartupIdea(e.target.value)}
-            placeholder="Example: An AI platform that helps college students find personalized career paths..."
-          />
-
-
-          {/* Mentor */}
-          <div className="section-title mentor-title">
-
-            <span className="step-number">02</span>
-
-            <div>
-              <h3>Choose your AI mentor</h3>
-              <p>Select the type of guidance you need.</p>
+              <span>SKILLS</span>
+              <strong>
+                {founderProfile.skills || "Not provided"}
+              </strong>
             </div>
 
-          </div>
+            <div>
+              <span>INTERESTS</span>
+              <strong>
+                {founderProfile.interests || "Not provided"}
+              </strong>
+            </div>
 
+            <div>
+              <span>BUDGET</span>
+              <strong>
+                {founderProfile.budget || "Not provided"}
+              </strong>
+            </div>
 
-          <div className="mentor-grid">
+            <div>
+              <span>GOALS</span>
+              <strong>
+                {founderProfile.goals || "Not provided"}
+              </strong>
+            </div>
+          </section>
+        )}
 
-            {[
-              {
-                name: "Strategy Mentor",
-                icon: "🎯",
-                description: "Business & market strategy"
-              },
-              {
-                name: "Pitch Deck Coach",
-                icon: "📈",
-                description: "Pitch & investor preparation"
-              },
-              {
-                name: "Tech Architect",
-                icon: "⚙️",
-                description: "Technology & architecture"
-              }
-            ].map((mentor) => (
+        {/* Main workspace */}
+        <div className="workspace-grid">
+
+          {/* Startup Idea */}
+          <section className="dashboard-card idea-card">
+
+            <div className="card-heading">
+              <div className="card-icon">💡</div>
+
+              <div>
+                <h2>Startup Idea</h2>
+                <p>What are you building?</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleGenerate}>
+              <textarea
+                value={startupIdea}
+                onChange={(e) =>
+                  setStartupIdea(e.target.value)
+                }
+                placeholder="Describe your startup idea in simple words..."
+              />
 
               <button
-                key={mentor.name}
-                type="button"
-                className={`mentor-card ${
-                  selectedMentor === mentor.name ? "selected" : ""
-                }`}
-                onClick={() => setSelectedMentor(mentor.name)}
+                className="generate-btn"
+                type="submit"
               >
-
-                <span className="mentor-icon">
-                  {mentor.icon}
-                </span>
-
-                <div>
-                  <strong>{mentor.name}</strong>
-                  <small>{mentor.description}</small>
-                </div>
-
-                <span className="selection-circle">
-                  {selectedMentor === mentor.name ? "✓" : ""}
-                </span>
-
+                🚀 Generate Startup Plan
               </button>
+            </form>
 
-            ))}
+          </section>
 
-          </div>
+          {/* Mentor Selection */}
+          <section className="dashboard-card mentor-card">
 
+            <div className="card-heading">
+              <div className="card-icon">🤖</div>
 
-          {/* Generate */}
-          <button
-            className="generate-button"
-            onClick={handleGenerate}
-            disabled={loading}
-          >
-            {loading
-              ? "Analyzing Your Idea..."
-              : "Activate AI Mentorship 🚀"}
-          </button>
-
-        </section>
-
-
-        {/* Generated Plan */}
-        {isGenerated && (
-
-          <section className="analysis-card">
-
-            <div className="analysis-header">
               <div>
-                <span>AI ANALYSIS</span>
-                <h2>Your Startup Roadmap</h2>
-              </div>
-
-              <div className="mentor-badge">
-                {selectedMentor}
+                <h2>Choose Your Mentor</h2>
+                <p>Select the guidance you need</p>
               </div>
             </div>
 
-            <div className="idea-preview">
-              <span>Your Idea</span>
-              <p>{startupIdea}</p>
-            </div>
+            <div className="mentor-grid">
+              {mentors.map((mentor) => (
+                <button
+                  key={mentor.name}
+                  type="button"
+                  className={`mentor-option ${
+                    selectedMentor === mentor.name
+                      ? "selected"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setSelectedMentor(mentor.name)
+                  }
+                >
+                  <span className="mentor-icon">
+                    {mentor.icon}
+                  </span>
 
-            <div className="analysis-grid">
+                  <strong>{mentor.name}</strong>
 
-              <div className="analysis-item">
-                <span>01</span>
-                <h3>Problem</h3>
-                <p>
-                  Identify the main problem your startup solves
-                  and why customers need a better solution.
-                </p>
-              </div>
-
-              <div className="analysis-item">
-                <span>02</span>
-                <h3>Target Customers</h3>
-                <p>
-                  Define the people most likely to use and pay
-                  for your product.
-                </p>
-              </div>
-
-              <div className="analysis-item">
-                <span>03</span>
-                <h3>Business Model</h3>
-                <p>
-                  Explore possible revenue models and
-                  monetization strategies.
-                </p>
-              </div>
-
-              <div className="analysis-item">
-                <span>04</span>
-                <h3>Next Steps</h3>
-                <p>
-                  Build, validate, test and improve your MVP
-                  step by step.
-                </p>
-              </div>
-
+                  <small>{mentor.description}</small>
+                </button>
+              ))}
             </div>
 
           </section>
 
-        )}
+        </div>
 
+        {/* Active Mentor */}
+        <section className="selected-mentor">
+          <span>ACTIVE MENTOR</span>
+          <strong>{selectedMentor}</strong>
+          <p>
+            Your selected AI mentor will use your founder
+            profile when providing guidance.
+          </p>
+        </section>
 
-        {/* AI Chat */}
-        <section className="chat-card">
+        {/* Chat */}
+        <section className="dashboard-card chat-card">
 
-          <div className="chat-header">
+          <div className="card-heading">
+            <div className="card-icon">💬</div>
 
             <div>
-              <span className="chat-icon">🤖</span>
-
-              <div>
-                <h3>AI Mentor Chat</h3>
-                <p>{selectedMentor} is ready to help</p>
-              </div>
+              <h2>AI Mentor Chat</h2>
+              <p>Ask questions about your startup</p>
             </div>
-
-            <span className="online-label">
-              ● Online
-            </span>
-
           </div>
 
-
-          <div className="chat-messages">
-
+          <div className="chat-history">
             {chatHistory.map((message, index) => (
-
               <div
                 key={index}
                 className={`chat-message ${
                   message.sender === "You"
                     ? "user-message"
-                    : "ai-message"
+                    : ""
                 }`}
               >
-
                 <strong>{message.sender}</strong>
-
                 <p>{message.text}</p>
-
               </div>
-
             ))}
-
           </div>
 
-
           <form
-            className="chat-input-area"
+            className="chat-form"
             onSubmit={handleSendMessage}
           >
-
             <input
               type="text"
+              placeholder="Ask your AI mentor..."
               value={chatMessage}
-              onChange={(e) => setChatMessage(e.target.value)}
-              placeholder="Ask your AI mentor anything..."
+              onChange={(e) =>
+                setChatMessage(e.target.value)
+              }
             />
 
             <button type="submit">
-              Send ➤
+              Send
             </button>
-
           </form>
 
         </section>
 
-      </main>
-
+      </div>
     </div>
   );
 }
