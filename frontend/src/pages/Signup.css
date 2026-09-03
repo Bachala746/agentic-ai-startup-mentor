@@ -174,8 +174,8 @@ body {
 .ai-robot-container {
   position: relative;
   width: 140px;
-  height: 140px;
-  margin: 10px 0 20px 30px;
+  height: 170px;
+  margin: 10px 0 35px 30px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -303,8 +303,9 @@ body {
 .badge-bottom { bottom: -20px; left: -50px; animation-delay: 2s; }
 
 .left-content h1 {
-  font-size: 2.6rem;
+  font-size: 2.25rem;
   font-weight: 800;
+  margin-top: 20px;
   margin-bottom: 12px;
   letter-spacing: -0.5px;
 }
@@ -658,14 +659,26 @@ body {
 }
 
 .signin-link {
-  color: var(--accent-blue);
+  color: #60a5fa !important;
   text-decoration: none;
-  font-weight: 600;
-  margin-left: 5px;
+  font-weight: 700;
+  margin-left: 6px;
+  cursor: pointer;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .signin-link:hover {
+  color: #93c5fd !important;
   text-decoration: underline;
+}
+
+.signin-link:focus,
+.signin-link:focus-visible,
+.signin-link:active {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Keyframes */
@@ -682,6 +695,43 @@ body {
 @keyframes blinkEye {
   0%, 96%, 98% { transform: scaleY(1); }
   97% { transform: scaleY(0.1); }
+}
+
+/* Fix Sign In link focus/selection */
+
+.signin-link {
+  color: #60a5fa !important;
+  background: transparent !important;
+  border: none !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  text-decoration: none;
+  font-weight: 700;
+  margin-left: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.signin-link:hover {
+  color: #93c5fd !important;
+  background: transparent !important;
+  text-decoration: underline;
+}
+
+.signin-link:focus,
+.signin-link:focus-visible,
+.signin-link:active,
+.signin-link:visited {
+  color: #60a5fa !important;
+  background: transparent !important;
+  border: none !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.signin-link::selection {
+  background: transparent !important;
+  color: #60a5fa !important;
 }
 
 /* Responsive Media Queries */
@@ -720,4 +770,9 @@ body {
     left: 0;
     margin-bottom: 20px;
   }
+
+  .signin-link::selection {
+  background: transparent;
+  color: #60a5fa;
+}
 }
