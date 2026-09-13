@@ -43,7 +43,7 @@ export default function Dashboard() {
     }
   ];
 
-  const handleGenerate = (e) => {
+  const handleGenerate = async (e) => {
     e.preventDefault();
 
     if (!startupIdea.trim()) {
@@ -51,7 +51,26 @@ export default function Dashboard() {
       return;
     }
 
-    alert("Founder profile + startup idea will be sent to the AI agents next.");
+    try {
+      const response = await fetch("http://127.0.0.1:8000/startup-plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          startupIdea: startupIdea,
+          founderProfile: founderProfile,
+          mentor: selectedMentor,
+        }),
+      });
+
+      const data = await response.json();
+
+      alert(data.message);
+    } catch (error) {
+      console.error(error);
+      alert("Unable to connect to the backend.");
+    }
   };
 
   const handleSendMessage = (e) => {
