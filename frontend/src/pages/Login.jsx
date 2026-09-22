@@ -33,8 +33,26 @@ export default function Login() {
 
     // Simulate backend authentication request
     setTimeout(() => {
+      const users = JSON.parse(
+        localStorage.getItem("startupUsers") || "{}"
+      );
+
+      const user = users[email.trim().toLowerCase()];
+
+      if (!user || user.password !== password) {
+        setIsLoading(false);
+        setError("Invalid email or password.");
+        return;
+      }
+
+      localStorage.setItem(
+        "currentUserEmail",
+        email.trim().toLowerCase()
+      );
+
       setIsLoading(false);
-      navigate("/dashboard");
+
+      navigate("/home");
     }, 1500);
   };
 

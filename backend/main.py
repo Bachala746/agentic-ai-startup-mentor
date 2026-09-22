@@ -4,11 +4,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from google import genai
+
+from agents.graph import startup_graph
+
 
 load_dotenv()
 
+
 app = FastAPI()
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,10 +23,6 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
-
-client = genai.Client(
-    api_key=os.getenv("GEMINI_API_KEY")
 )
 
 
@@ -42,37 +42,27 @@ def home():
 @app.post("/startup-plan")
 def startup_plan(request: StartupRequest):
 
-    prompt = f"""
-You are an AI Startup Mentor.
+    initial_state = {
+        "startup_idea": request.startupIdea,
+        "founder_profile": request.founderProfile,
+        "mentor": request.mentor,
+    }
 
-Startup Idea:
-{request.startupIdea}
+    print("Starting LangGraph workflow...")
 
-Founder Profile:
-{request.founderProfile}
+    result = startup_graph.invoke(initial_state)
 
-Selected Mentor:
-{request.mentor}
+    print("LangGraph workflow completed.")
 
-Give simple and practical startup guidance.
-
-Include:
-1. Idea validation
-2. Target customers
-3. Revenue model
-4. Main risks
-5. Next steps
-"""
-
-    print("Sending request to Gemini...")
-
-    response = client.models.generate_content(
-        model="gemini-3.6-flash",
-        contents=prompt
-    )
-
-    print("Gemini response received.")
+    decision = result.get("decision_analysis", {})
 
     return {
-        "message": response.text
+        "message": decision.get(
+            "overall_assessment",
+            result.get("final_recommendation", "No recommendation generated.")
+        ),
+        "market_analysis": result.get("market_analysis", {}),
+        "financial_analysis": result.get("financial_analysis", {}),
+        "risk_analysis": result.get("risk_analysis", {}),
+        "roadmap": result.get("roadmap", []),
     }

@@ -73,6 +73,12 @@ export default function Home() {
           >
             💡 Startup Workspace
           </button>
+          <button
+            className="nav-item"
+            onClick={() => navigate("/dashboard")}
+          >
+            🏠 Dashboard
+          </button>
           <button 
             className={`nav-item ${activeTab === "saved" ? "active" : ""}`}
             onClick={() => setActiveTab("saved")}
@@ -94,9 +100,15 @@ export default function Home() {
         </nav>
 
         <div className="sidebar-footer">
-          <button className="nav-item" onClick={() => navigate("/login")}>
-            🚪 Logout
-          </button>
+        <button
+          className="nav-item"
+          onClick={() => {
+            localStorage.removeItem("currentUserEmail");
+            navigate("/login");
+          }}
+        >
+          🚪 Logout
+        </button>
         </div>
       </aside>
 
@@ -105,7 +117,7 @@ export default function Home() {
         <header className="workspace-topbar">
           <div className="topbar-left">
             <h1>Startup Command Center</h1>
-            <p>Powered by Google Gemini & n8n Agentic Workflows</p>
+            <p>Powered by Google Gemini & LangGraph Multi-Agent Intelligence</p>
           </div>
           <div className="topbar-right">
             <div className="agent-status">

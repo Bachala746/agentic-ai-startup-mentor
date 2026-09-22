@@ -1,17 +1,55 @@
 import os
+
 from dotenv import load_dotenv
-from google import genai
+from pydantic import BaseModel, Field
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+from .state import StartupState
+
 
 load_dotenv()
 
-client = genai.Client(
-    api_key=os.getenv("GEMINI_API_KEY")
+
+class FinancialAnalysis(BaseModel):
+    financial_practicality: str = Field(
+        description="Overall financial practicality of the startup"
+    )
+    expense_categories: list[str] = Field(
+        description="High-level categories of startup expenses"
+    )
+    low_cost_mvp: list[str] = Field(
+        description="Ways to build a low-cost MVP"
+    )
+    revenue_models: list[str] = Field(
+        description="Possible revenue models"
+    )
+    financial_constraints: list[str] = Field(
+        description="Important financial constraints"
+    )
+    recommendations: list[str] = Field(
+        description="Practical financial recommendations"
+    )
+
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-3.5-flash-lite",
+    google_api_key=os.getenv("GEMINI_API_KEY"),
+    temperature=0.2,
 )
 
 
-def finance_agent(startup_idea, founder_profile=None):
+structured_llm = llm.with_structured_output(FinancialAnalysis)
+
+
+def finance_agent(state: StartupState):
+    startup_idea = state["startup_idea"]
+    founder_profile = state.get("founder_profile") or {}
+    market_analysis = state.get("market_analysis") or {}
+
     prompt = f"""
-You are the Finance Agent of an AI Startup Mentor.
+You are the Finance Agent in an AI Personalized Startup Mentor.
+
+Analyze the financial feasibility of the startup.
 
 Startup Idea:
 {startup_idea}
@@ -19,22 +57,35 @@ Startup Idea:
 Founder Profile:
 {founder_profile}
 
-Analyze the financial feasibility of this startup.
+Market Agent Analysis:
+{market_analysis}
 
-Provide:
-1. Estimated starting costs
-2. Budget feasibility
-3. Possible revenue models
-4. Major expenses
-5. Basic financial challenges
-6. Simple financial suggestions
+Consider:
+
+1. Financial practicality
+2. Founder budget
+3. High-level expense categories
+4. Low-cost MVP approach
+5. Possible revenue models
+6. Financial constraints
+7. Practical recommendations
+
+Personalize the analysis using the founder's:
+- Budget
+- Skills
+- Experience
+- Goals
+
+The founder may be a student with a limited budget.
+
+Do not invent precise financial facts, costs, or market statistics.
+Do not present guesses as real financial data.
 
 Keep the analysis practical and easy to understand.
 """
 
-    response = client.models.generate_content(
-        model="gemini-3.6-flash",
-        contents=prompt
-    )
+    result = structured_llm.invoke(prompt)
 
-    return response.text
+    return {
+        "financial_analysis": result.model_dump()
+    }

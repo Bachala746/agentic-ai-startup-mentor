@@ -15,6 +15,21 @@ export default function Profile() {
   });
 
   const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    const currentUserEmail = localStorage.getItem("currentUserEmail");
+
+    if (!currentUserEmail) return;
+
+    const users = JSON.parse(
+      localStorage.getItem("startupUsers") || "{}"
+    );
+
+    const user = users[currentUserEmail];
+
+    if (user?.profile) {
+      setProfile(user.profile);
+    }
+  }, []);
 
   const handleChange = (e) => {
     setProfile({
@@ -27,7 +42,29 @@ export default function Profile() {
   const handleSave = (e) => {
     e.preventDefault();
 
-    localStorage.setItem("founderProfile", JSON.stringify(profile));
+    const currentUserEmail = localStorage.getItem("currentUserEmail");
+
+    if (!currentUserEmail) {
+      alert("Please sign in first.");
+      return;
+    }
+
+    const users = JSON.parse(
+      localStorage.getItem("startupUsers") || "{}"
+    );
+
+    if (!users[currentUserEmail]) {
+      alert("User account not found.");
+      return;
+    }
+
+    users[currentUserEmail].profile = profile;
+
+    localStorage.setItem(
+      "startupUsers",
+      JSON.stringify(users)
+    );
+
     setSaved(true);
   };
 

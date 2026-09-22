@@ -1,46 +1,107 @@
 import os
+
 from dotenv import load_dotenv
-from google import genai
+from pydantic import BaseModel, Field
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+from .state import StartupState
+
 
 load_dotenv()
 
-client = genai.Client(
-    api_key=os.getenv("GEMINI_API_KEY")
+
+class DecisionAnalysis(BaseModel):
+    overall_assessment: str = Field(
+        description="Overall personalized assessment of the startup idea"
+    )
+    key_opportunities: list[str] = Field(
+        description="Most important opportunities"
+    )
+    main_considerations: list[str] = Field(
+        description="Most important financial, market, or implementation considerations"
+    )
+    main_risks: list[str] = Field(
+        description="Most important risks"
+    )
+    mvp_direction: list[str] = Field(
+        description="Practical direction for building the MVP"
+    )
+    next_actions: list[str] = Field(
+        description="Most important immediate actions for the founder"
+    )
+    roadmap: list[str] = Field(
+        description="Step-by-step startup roadmap"
+    )
+
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-3.5-flash-lite",
+    google_api_key=os.getenv("GEMINI_API_KEY"),
+    temperature=0.2,
 )
 
 
-def decision_agent(startup_idea, market_analysis, finance_analysis, risk_analysis):
+structured_llm = llm.with_structured_output(DecisionAnalysis)
+
+
+def decision_agent(state: StartupState):
+    startup_idea = state["startup_idea"]
+    founder_profile = state.get("founder_profile") or {}
+    market_analysis = state.get("market_analysis") or {}
+    financial_analysis = state.get("financial_analysis") or {}
+    risk_analysis = state.get("risk_analysis") or {}
+
     prompt = f"""
-You are the Decision Agent of an AI Startup Mentor.
+You are the Decision Agent in an AI Personalized Startup Mentor.
+
+Your job is to synthesize the outputs of the Market, Finance, and Risk Agents
+and provide personalized startup guidance.
 
 Startup Idea:
 {startup_idea}
+
+Founder Profile:
+{founder_profile}
 
 Market Agent Analysis:
 {market_analysis}
 
 Finance Agent Analysis:
-{finance_analysis}
+{financial_analysis}
 
 Risk Agent Analysis:
 {risk_analysis}
 
-Combine the above analyses and create a final startup guidance.
+Create a personalized decision and action plan.
+
+Consider the founder's:
+- Skills
+- Interests
+- Experience
+- Budget
+- Goals
 
 Provide:
-1. Overall idea assessment
-2. Key opportunity
-3. Main financial consideration
-4. Main risks
-5. Recommended next steps
-6. Simple 30-day startup roadmap
 
-Keep the response practical, clear, and easy to understand.
+1. Overall assessment
+2. Key opportunities
+3. Main considerations
+4. Main risks
+5. MVP direction
+6. Immediate next actions
+7. Step-by-step startup roadmap
+
+Do not simply concatenate the three agent outputs.
+Synthesize them into practical guidance.
+
+Do not invent precise market or financial facts.
+Keep the recommendations realistic and easy to understand.
 """
 
-    response = client.models.generate_content(
-        model="gemini-3.6-flash",
-        contents=prompt
-    )
+    result = structured_llm.invoke(prompt)
 
-    return response.text
+    return {
+        "final_recommendation": result.overall_assessment,
+        "roadmap": result.roadmap,
+        "decision_analysis": result.model_dump(),
+    }

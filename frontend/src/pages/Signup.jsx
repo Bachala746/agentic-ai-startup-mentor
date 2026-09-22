@@ -70,10 +70,41 @@ export default function Signup() {
     setIsLoading(true);
 
     // Simulate backend account creation request
-    setTimeout(() => {
-      setIsLoading(false);
-      navigate("/login");
-    }, 1500);
+      setTimeout(() => {
+        const users = JSON.parse(
+          localStorage.getItem("startupUsers") || "{}"
+        );
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        if (users[normalizedEmail]) {
+          setIsLoading(false);
+          setError("An account with this email already exists.");
+          return;
+        }
+
+        users[normalizedEmail] = {
+          fullName: fullName.trim(),
+          email: normalizedEmail,
+          password: password,
+          profile: {
+            fullName: fullName.trim(),
+            skills: "",
+            interests: "",
+            experience: "",
+            budget: "",
+            goals: "",
+          },
+        };
+
+        localStorage.setItem(
+          "startupUsers",
+          JSON.stringify(users)
+        );
+
+        setIsLoading(false);
+        navigate("/login");
+      }, 1500);
   };
 
   return (

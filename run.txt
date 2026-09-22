@@ -1,0 +1,8 @@
+                 backend
+cd C:\Projects\Agentic-AI-Startup-Mentor\backend
+.\startup_backend_env\Scripts\Activate.ps1
+uvicorn main:app --reload
+
+                  frontend
+cd C:\Projects\Agentic-AI-Startup-Mentor\frontend
+npm run dev
