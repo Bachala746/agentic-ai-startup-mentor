@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-
+import AgentInsights from "./pages/AgentInsights";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -17,6 +17,7 @@ function App() {
       <Route path="/home" element={<Home />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/saved-plans" element={<SavedPlans />} />
+      <Route path="/agent-insights" element={<AgentInsights />} />
     </Routes>
   );
 }

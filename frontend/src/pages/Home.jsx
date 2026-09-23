@@ -85,7 +85,7 @@ export default function Home() {
 
           <button 
             className={`nav-item ${activeTab === "analytics" ? "active" : ""}`}
-            onClick={() => setActiveTab("analytics")}
+            onClick={() => navigate("/agent-insights")}
           >
             📊 Agent Insights
           </button>

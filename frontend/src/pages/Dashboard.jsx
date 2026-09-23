@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [startupIdea, setStartupIdea] = useState("");
   const [selectedMentor, setSelectedMentor] = useState("Strategy Mentor");
   const [generatedPlan, setGeneratedPlan] = useState(null);
+  const [completedSteps, setCompletedSteps] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const [chatMessage, setChatMessage] = useState("");
@@ -488,7 +489,25 @@ export default function Dashboard() {
                 <h3>🛣️ Startup Roadmap</h3>
                 <ol>
                   {generatedPlan.roadmap?.map((step, index) => (
-                    <li key={index}>{step}</li>
+                    <li key={index} style={{ marginBottom: "10px" }}>
+                      <label style={{ cursor: "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={completedSteps.includes(index)}
+                          onChange={() => {
+                            setCompletedSteps((prev) =>
+                              prev.includes(index)
+                                ? prev.filter((item) => item !== index)
+                                : [...prev, index]
+                            );
+                          }}
+                        />
+
+                        <span style={{ marginLeft: "10px" }}>
+                          {step}
+                        </span>
+                      </label>
+                    </li>
                   ))}
                 </ol>
               </div>
