@@ -79,12 +79,10 @@ export default function Home() {
           >
             🏠 Dashboard
           </button>
-          <button 
-            className={`nav-item ${activeTab === "saved" ? "active" : ""}`}
-            onClick={() => setActiveTab("saved")}
-          >
-            📂 Saved Plans
+          <button className="nav-item" onClick={() => navigate("/saved-plans")}>
+            💾 Saved Plans
           </button>
+
           <button 
             className={`nav-item ${activeTab === "analytics" ? "active" : ""}`}
             onClick={() => setActiveTab("analytics")}
