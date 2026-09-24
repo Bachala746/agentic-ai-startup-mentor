@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 import "./Dashboard.css";
 
 export default function Dashboard() {
@@ -72,9 +73,10 @@ export default function Dashboard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          message: userMessage,
           startupIdea: startupIdea,
-          founderProfile: founderProfile,
           mentor: selectedMentor,
+          founderProfile: founderProfile,
         }),
       });
 
@@ -93,24 +95,64 @@ export default function Dashboard() {
     }
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
 
     if (!chatMessage.trim()) return;
+
+    const userMessage = chatMessage;
 
     setChatHistory((prev) => [
       ...prev,
       {
         sender: "You",
-        text: chatMessage
+        text: userMessage,
       },
-      {
-        sender: "AI",
-        text: `I'll help you with that as your ${selectedMentor}.`
-      }
     ]);
 
     setChatMessage("");
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/mentor-chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: userMessage,
+            startupIdea: startupIdea,
+            mentor: selectedMentor,
+            founderProfile: founderProfile,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error("Chat request failed");
+      }
+
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          sender: "AI",
+          text: data.reply,
+        },
+      ]);
+    } catch (error) {
+      console.error(error);
+
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          sender: "AI",
+          text: "Sorry, I could not connect to the AI mentor right now.",
+        },
+      ]);
+    }
   };
 
   return (
@@ -594,7 +636,9 @@ export default function Dashboard() {
                 }`}
               >
                 <strong>{message.sender}</strong>
-                <p>{message.text}</p>
+                <div className="chat-message-content">
+                  <ReactMarkdown>{message.text}</ReactMarkdown>
+                </div>
               </div>
             ))}
           </div>

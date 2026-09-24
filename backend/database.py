@@ -21,10 +21,18 @@ def create_tables():
             financial_analysis TEXT,
             risk_analysis TEXT,
             roadmap TEXT,
+            roadmap_progress TEXT DEFAULT '[]',
             final_decision TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+    try:
+        cursor.execute(
+            "ALTER TABLE startup_plans ADD COLUMN roadmap_progress TEXT DEFAULT '[]'"
+        )
+    except sqlite3.OperationalError:
+        pass
 
     connection.commit()
     connection.close()
