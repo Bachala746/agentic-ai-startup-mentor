@@ -22,18 +22,35 @@ export default function Dashboard() {
   ]);
 
   useEffect(() => {
+    // Get current user
     const currentUserEmail = localStorage.getItem("currentUserEmail");
 
-    if (!currentUserEmail) return;
+    if (currentUserEmail) {
+      const users = JSON.parse(
+        localStorage.getItem("startupUsers") || "{}"
+      );
 
-    const users = JSON.parse(
-      localStorage.getItem("startupUsers") || "{}"
-    );
+      const user = users[currentUserEmail];
 
-    const user = users[currentUserEmail];
+      if (user?.profile) {
+        setFounderProfile(user.profile);
+      }
+    }
 
-    if (user?.profile) {
-      setFounderProfile(user.profile);
+    // Get startup idea selected from Home
+    const savedStartupIdea =
+      localStorage.getItem("selectedStartupIdea");
+
+    if (savedStartupIdea) {
+      setStartupIdea(savedStartupIdea);
+    }
+
+    // Get mentor selected from Home
+    const savedMentor =
+      localStorage.getItem("selectedMentor");
+
+    if (savedMentor) {
+      setSelectedMentor(savedMentor);
     }
   }, []);
 

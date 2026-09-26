@@ -36,6 +36,85 @@ class StartupRequest(BaseModel):
     founderProfile: dict | None = None
     mentor: str
 
+class IdeaOverviewRequest(BaseModel):
+    startupIdea: str
+
+
+@app.post("/idea-overview")
+def idea_overview(request: IdeaOverviewRequest):
+    try:
+        model = ChatGoogleGenerativeAI(
+            model="gemini-3.5-flash-lite"
+        )
+
+        prompt = f"""
+You are an AI startup mentor.
+
+Analyze this startup idea:
+
+{request.startupIdea}
+
+Give a simple startup idea overview.
+
+Return ONLY valid JSON with exactly these fields:
+
+{{
+    "title": "short title",
+    "description": "simple description",
+    "problem": ["problem 1", "problem 2"],
+    "target_users": ["user 1", "user 2"],
+    "key_features": ["feature 1", "feature 2", "feature 3"],
+    "how_it_works": ["step 1", "step 2", "step 3"],
+    "first_steps": ["step 1", "step 2", "step 3"],
+    "opportunity": "simple explanation of the opportunity",
+    "challenges": ["challenge 1", "challenge 2", "challenge 3"]
+}}
+
+Do not add any other fields.
+"""
+
+        response = model.invoke(prompt)
+
+        content = response.content
+
+        if isinstance(content, list):
+            content = "".join(
+                item.get("text", "")
+                if isinstance(item, dict)
+                else str(item)
+                for item in content
+            )
+
+        content = content.strip()
+
+        if content.startswith("```json"):
+            content = content[7:]
+
+        if content.startswith("```"):
+            content = content[3:]
+
+        if content.endswith("```"):
+            content = content[:-3]
+
+        return json.loads(content.strip())
+
+    except Exception as error:
+        print("Idea overview error:", error)
+        return {
+            "detail": "Unable to generate startup overview."
+        }
+
+class IdeaOverview(BaseModel):
+    title: str
+    description: str
+    problem: list[str]
+    target_users: list[str]
+    key_features: list[str]
+    how_it_works: list[str]
+    first_steps: list[str]
+    opportunity: str
+    challenges: list[str]
+
 class ChatRequest(BaseModel):
     message: str
     startupIdea: str = ""
@@ -59,6 +138,7 @@ def home():
     return {
         "message": "Agentic AI Startup Mentor Backend is running!"
     }
+
 
 
 @app.post("/startup-plan")
@@ -134,6 +214,20 @@ class RoadmapProgressRequest(BaseModel):
     planId: int
     completedSteps: list[int]
 
+@app.delete("/saved-plans/{plan_id}")
+def delete_saved_plan(plan_id: int):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        "DELETE FROM startup_plans WHERE id = ?",
+        (plan_id,),
+    )
+
+    connection.commit()
+    connection.close()
+
+    return {"message": "Startup plan deleted successfully!"}
 
 @app.put("/update-roadmap-progress")
 def update_roadmap_progress(request: RoadmapProgressRequest):

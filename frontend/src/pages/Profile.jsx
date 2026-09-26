@@ -74,14 +74,28 @@ export default function Profile() {
 
         {/* Header */}
         <div className="profile-header">
-          <button
-            className="back-button"
-            onClick={() => navigate("/dashboard")}
-          >
-            ← Back to Dashboard
-          </button>
+          <div className="profile-top-nav">
+            <div className="profile-nav-buttons">
+              <button onClick={() => navigate("/home")}>
+                Home
+              </button>
 
-          <h1>Founder Profile</h1>
+              <button onClick={() => navigate("/dashboard")}>
+                Dashboard
+              </button>
+
+              <button
+                onClick={() => {
+                  localStorage.removeItem("currentUserEmail");
+                  navigate("/login");
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+
+          <h1>User Profile</h1>
           <p>
             Tell us about yourself so your AI mentor can personalize your
             startup guidance.
@@ -93,7 +107,7 @@ export default function Profile() {
 
           <div className="profile-avatar">👤</div>
 
-          <h2>Founder Information</h2>
+          <h2>User Information</h2>
 
           {/* Full Name */}
           <div className="profile-field">

@@ -6,6 +6,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import SavedPlans from "./pages/SavedPlans";
+import IdeaOverview from "./pages/IdeaOverview";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       <Route path="/profile" element={<Profile />} />
       <Route path="/saved-plans" element={<SavedPlans />} />
       <Route path="/agent-insights" element={<AgentInsights />} />
+      <Route path="/idea-overview" element={<IdeaOverview />}/>
     </Routes>
   );
 }

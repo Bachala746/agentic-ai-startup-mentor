@@ -259,3 +259,43 @@
     grid-template-columns: 1fr;
   }
 }
+
+.profile-top-nav {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.profile-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-nav-buttons button {
+  padding: 8px 16px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-family: "Inter", sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-nav-buttons button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border-color: #6366f1;
+}
+
+.profile-nav-buttons button:last-child {
+  color: #fca5a5;
+}
+
+.profile-nav-buttons button:last-child:hover {
+  color: #ffffff;
+  border-color: rgba(239, 68, 68, 0.5);
+}
