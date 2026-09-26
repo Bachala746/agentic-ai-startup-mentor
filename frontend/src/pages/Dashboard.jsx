@@ -73,10 +73,9 @@ export default function Dashboard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: userMessage,
-          startupIdea: startupIdea,
-          mentor: selectedMentor,
-          founderProfile: founderProfile,
+            startupIdea: startupIdea,
+            founderProfile: founderProfile,
+            mentor: selectedMentor,
         }),
       });
 

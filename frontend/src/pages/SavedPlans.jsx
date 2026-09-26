@@ -1,5 +1,27 @@
 import { useEffect, useState } from "react";
 
+
+function formatSavedDate(dateString) {
+  const utcDate = new Date(dateString.replace(" ", "T") + "Z");
+
+  const parts = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).formatToParts(utcDate);
+
+  const getPart = (type) =>
+    parts.find((part) => part.type === type)?.value || "";
+
+  return `${getPart("day")}/${getPart("month")}/${getPart("year")} ${getPart("hour")}:${getPart("minute")}:${getPart("second")} ${getPart("dayPeriod").toUpperCase()}`;
+}
+
+
 export default function SavedPlans() {
   const [savedPlans, setSavedPlans] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -74,7 +96,7 @@ export default function SavedPlans() {
           <p>Mentor: {selectedPlan.mentor}</p>
           <p>
             Saved:{" "}
-            {new Date(selectedPlan.created_at).toLocaleString()}
+            {formatSavedDate(selectedPlan.created_at)}
           </p>
         </div>
 
@@ -208,7 +230,7 @@ export default function SavedPlans() {
 
             <p>
               Saved:{" "}
-              {new Date(plan.created_at).toLocaleString()}
+              {formatSavedDate(plan.created_at)}
             </p>
 
             <button

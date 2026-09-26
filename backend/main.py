@@ -227,6 +227,9 @@ Experience: {profile.get("experience", "Not provided")}
 Budget: {profile.get("budget", "Not provided")}
 Goals: {profile.get("goals", "Not provided")}
 
+User Profile:
+{request.founderProfile}
+
 STARTUP IDEA:
 {request.startupIdea or "No startup idea provided"}
 
