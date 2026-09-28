@@ -12,43 +12,65 @@ export default function IdeaOverview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Generate startup overview
+  const generateOverview = async () => {
+    setLoading(true);
+    setError("");
+    setOverview(null);
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/idea-overview",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            startupIdea: startupIdea,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const backendMessage =
+          typeof data.detail === "object"
+            ? data.detail.message
+            : data.detail;
+
+        throw new Error(
+          backendMessage ||
+            "Unable to generate startup overview."
+        );
+      }
+
+      setOverview(data);
+    } catch (err) {
+      console.error("Idea overview error:", err);
+
+      if (err instanceof TypeError) {
+        setError(
+          "🌐 Unable to connect to the AI service. Please check that the backend is running."
+        );
+      } else {
+        setError(
+          err.message ||
+            "Unable to generate the startup overview right now."
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Automatically generate overview when page opens
   useEffect(() => {
     if (!startupIdea) {
       setLoading(false);
       return;
     }
-
-    const generateOverview = async () => {
-      try {
-        const response = await fetch(
-          "http://127.0.0.1:8000/idea-overview",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              startupIdea: startupIdea,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to generate overview");
-        }
-
-        const data = await response.json();
-
-        setOverview(data);
-      } catch (err) {
-        console.error("Idea overview error:", err);
-        setError(
-          "Unable to generate the startup overview right now."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
 
     generateOverview();
   }, [startupIdea]);
@@ -57,6 +79,7 @@ export default function IdeaOverview() {
     navigate("/dashboard");
   };
 
+  // No startup idea
   if (!startupIdea) {
     return (
       <div className="idea-overview-page">
@@ -78,6 +101,7 @@ export default function IdeaOverview() {
     );
   }
 
+  // Loading
   if (loading) {
     return (
       <div className="idea-overview-page">
@@ -101,6 +125,7 @@ export default function IdeaOverview() {
     );
   }
 
+  // Error
   if (error || !overview) {
     return (
       <div className="idea-overview-page">
@@ -115,6 +140,13 @@ export default function IdeaOverview() {
 
           <button
             className="overview-back-btn"
+            onClick={generateOverview}
+          >
+            🔄 Try Again
+          </button>
+
+          <button
+            className="overview-back-btn"
             onClick={() => navigate("/")}
           >
             ← Try Another Idea
@@ -124,9 +156,9 @@ export default function IdeaOverview() {
     );
   }
 
+  // Successful overview
   return (
     <div className="idea-overview-page">
-
       <div className="idea-overview-card">
 
         <div className="overview-label">
@@ -247,7 +279,6 @@ export default function IdeaOverview() {
         </div>
 
       </div>
-
     </div>
   );
 }

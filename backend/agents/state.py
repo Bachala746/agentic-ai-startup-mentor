@@ -6,9 +6,10 @@ class StartupState(TypedDict, total=False):
     founder_profile: dict | None
     mentor: str
 
+    web_sources: list[dict]
+
     market_analysis: dict
     financial_analysis: dict
     risk_analysis: dict
-
     final_recommendation: str
     roadmap: list[str]

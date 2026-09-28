@@ -1,7 +1,7 @@
 import os
 import json
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -39,12 +39,13 @@ class StartupRequest(BaseModel):
 class IdeaOverviewRequest(BaseModel):
     startupIdea: str
 
-
 @app.post("/idea-overview")
 def idea_overview(request: IdeaOverviewRequest):
     try:
         model = ChatGoogleGenerativeAI(
-            model="gemini-3.5-flash-lite"
+            model="gemini-3.5-flash-lite",
+            google_api_key=os.getenv("GEMINI_API_KEY"),
+            temperature=0.2,
         )
 
         prompt = f"""
@@ -99,10 +100,48 @@ Do not add any other fields.
         return json.loads(content.strip())
 
     except Exception as error:
-        print("Idea overview error:", error)
-        return {
-            "detail": "Unable to generate startup overview."
-        }
+        error_message = str(error)
+
+        print("Idea overview error:", error_message)
+
+        # Gemini temporarily unavailable
+        if "503" in error_message or "UNAVAILABLE" in error_message:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "error_type": "AI_SERVICE_BUSY",
+                    "message": "The AI service is temporarily busy. Please try again in a few moments.",
+                },
+            )
+
+        # Gemini request limit / quota
+        if "429" in error_message or "RESOURCE_EXHAUSTED" in error_message:
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "error_type": "AI_REQUEST_LIMIT",
+                    "message": "The AI request limit has been reached. Please try again later.",
+                },
+            )
+
+        # Invalid AI response
+        if isinstance(error, json.JSONDecodeError):
+            raise HTTPException(
+                status_code=502,
+                detail={
+                    "error_type": "INVALID_AI_RESPONSE",
+                    "message": "The AI returned an invalid response. Please try generating the overview again.",
+                },
+            )
+
+        # Other unexpected errors
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error_type": "AI_GENERATION_ERROR",
+                "message": "We couldn't generate the startup overview right now. Please try again.",
+            },
+        )
 
 class IdeaOverview(BaseModel):
     title: str
