@@ -58,29 +58,41 @@ def search_current_market_information(startup_idea: str):
     """
 
     queries = [
-        f"{startup_idea} market trends 2026",
-        f"{startup_idea} competitors companies alternatives",
-        f"{startup_idea} recent developments 2026",
+        {
+            "category": "Market Trends",
+            "query": f"{startup_idea} market trends 2026",
+        },
+        {
+            "category": "Competitors & Alternatives",
+            "query": f"{startup_idea} competitors companies alternatives",
+        },
+        {
+            "category": "Recent Developments",
+            "query": f"{startup_idea} recent developments 2026",
+        },
     ]
 
     all_results = []
 
-    for query in queries:
+    for search in queries:
         try:
             results = DDGS().text(
-                query,
+                search["query"],
                 max_results=5
             )
 
             for result in results:
                 all_results.append({
+                    "category": search["category"],
                     "title": result.get("title", ""),
                     "url": result.get("href", ""),
                     "snippet": result.get("body", ""),
                 })
 
         except Exception as error:
-            print(f"Web search failed for '{query}': {error}")
+            print(
+                f"Web search failed for '{search['query']}': {error}"
+            )
 
     # Remove duplicate URLs
     unique_results = []
@@ -93,8 +105,7 @@ def search_current_market_information(startup_idea: str):
             seen_urls.add(url)
             unique_results.append(result)
 
-    return unique_results[:10]
-
+    return unique_results[:15]
 
 def market_agent(state: StartupState):
     startup_idea = state["startup_idea"]
@@ -107,11 +118,12 @@ def market_agent(state: StartupState):
 
     for index, result in enumerate(web_results, start=1):
         web_information += f"""
-Source {index}:
-Title: {result["title"]}
-URL: {result["url"]}
-Information: {result["snippet"]}
-"""
+    Source: {index}
+    Category: {result["category"]}
+    Title: {result["title"]}
+    URL: {result["url"]}
+    Information: {result["snippet"]}
+    """
 
     prompt = f"""
 You are the Market Agent in an AI Personalized Startup Mentor.

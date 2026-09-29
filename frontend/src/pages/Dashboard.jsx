@@ -409,6 +409,37 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              <div className="analysis-item">
+                <h4>🌐 Current Web Research — Market Trends</h4>
+
+                {generatedPlan.web_sources
+                  ?.filter((source) => source.category === "Market Trends")
+                  .map((source, index) => (
+                    <div key={index} style={{ marginBottom: "20px" }}>
+                      <strong>{source.title}</strong>
+
+                      <p>
+                        <strong>Source:</strong>{" "}
+                        {source.url
+                          ? new URL(source.url).hostname
+                          : "Web Source"}
+                      </p>
+
+                      {source.snippet && <p>{source.snippet}</p>}
+
+                      {source.url && (
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          🔗 View Source
+                        </a>
+                      )}
+                    </div>
+                  ))}
+              </div>
+
               <div className="result-section">
                 <h3>💰 Financial Analysis</h3>
 

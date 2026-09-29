@@ -198,14 +198,12 @@ def startup_plan(request: StartupRequest):
     decision = result.get("decision_analysis", {})
 
     return {
-        "message": decision.get(
-            "overall_assessment",
-            result.get("final_recommendation", "No recommendation generated.")
-        ),
+        "message": decision.get("overall_assessment", result.get("final_recommendation", "No recommendation generated.")),
         "market_analysis": result.get("market_analysis", {}),
         "financial_analysis": result.get("financial_analysis", {}),
         "risk_analysis": result.get("risk_analysis", {}),
         "roadmap": result.get("roadmap", []),
+        "web_sources": result.get("web_sources", []),
     }
 @app.post("/save-plan")
 def save_plan(request: SavePlanRequest):
