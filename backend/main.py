@@ -36,16 +36,59 @@ class StartupRequest(BaseModel):
     founderProfile: dict | None = None
     mentor: str
 
+
 class IdeaOverviewRequest(BaseModel):
     startupIdea: str
+
+
+class IdeaOverview(BaseModel):
+    title: str
+    description: str
+    problem: list[str]
+    target_users: list[str]
+    key_features: list[str]
+    how_it_works: list[str]
+    first_steps: list[str]
+    opportunity: str
+    challenges: list[str]
+
+
+class ChatRequest(BaseModel):
+    message: str
+    startupIdea: str = ""
+    mentor: str
+    founderProfile: dict | None = None
+
+
+class SavePlanRequest(BaseModel):
+    userEmail: str
+    startupIdea: str
+    mentor: str
+    marketAnalysis: dict
+    financialAnalysis: dict
+    riskAnalysis: dict
+    roadmap: list[str]
+    roadmapProgress: list[int] = []
+    finalDecision: str
+
+
+class RoadmapProgressRequest(BaseModel):
+    planId: int
+    completedSteps: list[int]
+
+
+@app.get("/")
+def home():
+    return {
+        "message": "Agentic AI Startup Mentor Backend is running!"
+    }
+
 
 @app.post("/idea-overview")
 def idea_overview(request: IdeaOverviewRequest):
     try:
         model = ChatGoogleGenerativeAI(
-            model="gemini-3.5-flash-lite",
-            google_api_key=os.getenv("GEMINI_API_KEY"),
-            temperature=0.2,
+            model="gemini-3.5-flash-lite"
         )
 
         prompt = f"""
@@ -100,111 +143,99 @@ Do not add any other fields.
         return json.loads(content.strip())
 
     except Exception as error:
-        error_message = str(error)
+        error_text = str(error)
 
-        print("Idea overview error:", error_message)
+        print("Idea overview error:", error_text)
 
-        # Gemini temporarily unavailable
-        if "503" in error_message or "UNAVAILABLE" in error_message:
+        if "503" in error_text or "UNAVAILABLE" in error_text:
             raise HTTPException(
                 status_code=503,
                 detail={
                     "error_type": "AI_SERVICE_BUSY",
-                    "message": "The AI service is temporarily busy. Please try again in a few moments.",
+                    "message": (
+                        "The AI service is temporarily busy. "
+                        "Please try again in a few moments."
+                    ),
                 },
             )
 
-        # Gemini request limit / quota
-        if "429" in error_message or "RESOURCE_EXHAUSTED" in error_message:
+        if "429" in error_text or "RESOURCE_EXHAUSTED" in error_text:
             raise HTTPException(
                 status_code=429,
                 detail={
                     "error_type": "AI_REQUEST_LIMIT",
-                    "message": "The AI request limit has been reached. Please try again later.",
+                    "message": (
+                        "The AI request limit has been reached. "
+                        "Please try again later."
+                    ),
                 },
             )
 
-        # Invalid AI response
-        if isinstance(error, json.JSONDecodeError):
-            raise HTTPException(
-                status_code=502,
-                detail={
-                    "error_type": "INVALID_AI_RESPONSE",
-                    "message": "The AI returned an invalid response. Please try generating the overview again.",
-                },
-            )
-
-        # Other unexpected errors
         raise HTTPException(
             status_code=500,
             detail={
                 "error_type": "AI_GENERATION_ERROR",
-                "message": "We couldn't generate the startup overview right now. Please try again.",
+                "message": "Unable to generate startup overview.",
             },
         )
-
-class IdeaOverview(BaseModel):
-    title: str
-    description: str
-    problem: list[str]
-    target_users: list[str]
-    key_features: list[str]
-    how_it_works: list[str]
-    first_steps: list[str]
-    opportunity: str
-    challenges: list[str]
-
-class ChatRequest(BaseModel):
-    message: str
-    startupIdea: str = ""
-    mentor: str
-    founderProfile: dict | None = None
-
-class SavePlanRequest(BaseModel):
-    userEmail: str
-    startupIdea: str
-    mentor: str
-    marketAnalysis: dict
-    financialAnalysis: dict
-    riskAnalysis: dict
-    roadmap: list[str]
-    roadmapProgress: list[int] = []
-    finalDecision: str
-
-
-@app.get("/")
-def home():
-    return {
-        "message": "Agentic AI Startup Mentor Backend is running!"
-    }
-
 
 
 @app.post("/startup-plan")
 def startup_plan(request: StartupRequest):
+    try:
+        initial_state = {
+            "startup_idea": request.startupIdea,
+            "founder_profile": request.founderProfile,
+            "mentor": request.mentor,
+        }
 
-    initial_state = {
-        "startup_idea": request.startupIdea,
-        "founder_profile": request.founderProfile,
-        "mentor": request.mentor,
-    }
+        print("Starting LangGraph workflow...")
 
-    print("Starting LangGraph workflow...")
+        result = startup_graph.invoke(initial_state)
 
-    result = startup_graph.invoke(initial_state)
+        print("LangGraph workflow completed.")
 
-    print("LangGraph workflow completed.")
+        decision = result.get("decision_analysis", {})
 
-    decision = result.get("decision_analysis", {})
+        return {
+            "message": decision.get(
+                "overall_assessment",
+                result.get(
+                    "final_recommendation",
+                    "No recommendation generated.",
+                ),
+            ),
+            "market_analysis": result.get(
+                "market_analysis",
+                {},
+            ),
+            "financial_analysis": result.get(
+                "financial_analysis",
+                {},
+            ),
+            "risk_analysis": result.get(
+                "risk_analysis",
+                {},
+            ),
+            "roadmap": result.get(
+                "roadmap",
+                [],
+            ),
+            "web_sources": result.get(
+                "web_sources",
+                [],
+            ),
+        }
 
-    return {
-        "message": decision.get("overall_assessment", result.get("final_recommendation", "No recommendation generated.")),
-        "market_analysis": result.get("market_analysis", {}),
-        "financial_analysis": result.get("financial_analysis", {}),
-        "risk_analysis": result.get("risk_analysis", {}),
-        "roadmap": result.get("roadmap", []),
-        "web_sources": result.get("web_sources", []),
-    }
+    except Exception as error:
+        print("Startup plan error:", error)
+
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to generate startup plan.",
+        )
+
+
 @app.post("/save-plan")
 def save_plan(request: SavePlanRequest):
     connection = get_connection()
@@ -245,11 +276,9 @@ def save_plan(request: SavePlanRequest):
 
     return {
         "message": "Startup plan saved successfully!",
-        "planId": plan_id
+        "planId": plan_id,
     }
-class RoadmapProgressRequest(BaseModel):
-    planId: int
-    completedSteps: list[int]
+
 
 @app.delete("/saved-plans/{plan_id}")
 def delete_saved_plan(plan_id: int):
@@ -264,10 +293,15 @@ def delete_saved_plan(plan_id: int):
     connection.commit()
     connection.close()
 
-    return {"message": "Startup plan deleted successfully!"}
+    return {
+        "message": "Startup plan deleted successfully!"
+    }
+
 
 @app.put("/update-roadmap-progress")
-def update_roadmap_progress(request: RoadmapProgressRequest):
+def update_roadmap_progress(
+    request: RoadmapProgressRequest
+):
     connection = get_connection()
     cursor = connection.cursor()
 
@@ -286,7 +320,11 @@ def update_roadmap_progress(request: RoadmapProgressRequest):
     connection.commit()
     connection.close()
 
-    return {"message": "Roadmap progress updated successfully!"}
+    return {
+        "message": "Roadmap progress updated successfully!"
+    }
+
+
 @app.get("/saved-plans")
 def get_saved_plans(user_email: str = ""):
     connection = get_connection()
@@ -295,10 +333,18 @@ def get_saved_plans(user_email: str = ""):
     if user_email:
         cursor.execute(
             """
-            SELECT id, user_email, startup_idea, mentor,
-                   market_analysis, financial_analysis,
-                   risk_analysis, roadmap, final_decision,
-                   created_at
+            SELECT
+                id,
+                user_email,
+                startup_idea,
+                mentor,
+                market_analysis,
+                financial_analysis,
+                risk_analysis,
+                roadmap,
+                roadmap_progress,
+                final_decision,
+                created_at
             FROM startup_plans
             WHERE user_email = ?
             ORDER BY created_at DESC
@@ -308,10 +354,18 @@ def get_saved_plans(user_email: str = ""):
     else:
         cursor.execute(
             """
-            SELECT id, user_email, startup_idea, mentor,
-                   market_analysis, financial_analysis,
-                   risk_analysis, roadmap, final_decision,
-                   created_at
+            SELECT
+                id,
+                user_email,
+                startup_idea,
+                mentor,
+                market_analysis,
+                financial_analysis,
+                risk_analysis,
+                roadmap,
+                roadmap_progress,
+                final_decision,
+                created_at
             FROM startup_plans
             ORDER BY created_at DESC
             """
@@ -323,20 +377,26 @@ def get_saved_plans(user_email: str = ""):
     plans = []
 
     for row in rows:
-        plans.append({
-            "id": row[0],
-            "user_email": row[1],
-            "startup_idea": row[2],
-            "mentor": row[3],
-            "market_analysis": json.loads(row[4]),
-            "financial_analysis": json.loads(row[5]),
-            "risk_analysis": json.loads(row[6]),
-            "roadmap": json.loads(row[7]),
-            "final_decision": row[8],
-            "created_at": row[9],
-        })
+        plans.append(
+            {
+                "id": row[0],
+                "user_email": row[1],
+                "startup_idea": row[2],
+                "mentor": row[3],
+                "market_analysis": json.loads(row[4]),
+                "financial_analysis": json.loads(row[5]),
+                "risk_analysis": json.loads(row[6]),
+                "roadmap": json.loads(row[7]),
+                "roadmap_progress": json.loads(row[8]),
+                "final_decision": row[9],
+                "created_at": row[10],
+            }
+        )
 
-    return {"plans": plans}
+    return {
+        "plans": plans
+    }
+
 
 @app.post("/mentor-chat")
 def mentor_chat(request: ChatRequest):
@@ -351,15 +411,24 @@ def mentor_chat(request: ChatRequest):
 You are an AI startup mentor.
 
 USER PROFILE:
-Name: {profile.get("fullName", "Not provided")}
-Skills: {profile.get("skills", "Not provided")}
-Interests: {profile.get("interests", "Not provided")}
-Experience: {profile.get("experience", "Not provided")}
-Budget: {profile.get("budget", "Not provided")}
-Goals: {profile.get("goals", "Not provided")}
 
-User Profile:
-{request.founderProfile}
+Name:
+{profile.get("fullName", "Not provided")}
+
+Skills:
+{profile.get("skills", "Not provided")}
+
+Interests:
+{profile.get("interests", "Not provided")}
+
+Experience:
+{profile.get("experience", "Not provided")}
+
+Budget:
+{profile.get("budget", "Not provided")}
+
+Goals:
+{profile.get("goals", "Not provided")}
 
 STARTUP IDEA:
 {request.startupIdea or "No startup idea provided"}
@@ -373,37 +442,40 @@ USER QUESTION:
 Give a practical, simple, and personalized answer.
 
 Use the user's profile when relevant:
+
 - Consider their skills when suggesting technical approaches.
 - Consider their interests when suggesting opportunities.
 - Consider their experience when giving recommendations.
 - Consider their budget when suggesting solutions.
 - Consider their goals when suggesting next steps.
-- If no startup idea is provided, use the user's profile to provide relevant startup guidance.
+- If no startup idea is provided, use the user's profile.
 - Do not invent profile information.
 
 IMPORTANT:
-- Use clear headings for different topics.
+
+- Use clear headings.
 - Use bullet points for lists.
 - Use numbered points for steps.
-- Use **bold text** to highlight important words.
-- Keep each point short and easy to understand.
-- Do not write one large continuous paragraph.
 - Use Markdown formatting.
-- Give practical examples when useful.
-- Do not use horizontal lines or "---".
-- Keep the response visually clean and professional.
-- Focus on helping the user build and improve their startup.
+- Keep each point short.
+- Do not write one large continuous paragraph.
+- Do not use horizontal lines.
+- Keep the response professional.
 """
 
         response = model.invoke(prompt)
 
         if isinstance(response.content, str):
             reply = response.content
+
         elif isinstance(response.content, list):
             reply = "".join(
-                item.get("text", "") if isinstance(item, dict) else str(item)
+                item.get("text", "")
+                if isinstance(item, dict)
+                else str(item)
                 for item in response.content
             )
+
         else:
             reply = str(response.content)
 
@@ -413,6 +485,10 @@ IMPORTANT:
 
     except Exception as error:
         print("Mentor chat error:", error)
+
         return {
-            "reply": "Sorry, I could not generate a response right now."
+            "reply": (
+                "Sorry, I could not generate a response "
+                "right now."
+            )
         }
