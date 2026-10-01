@@ -320,31 +320,33 @@ export default function Dashboard() {
   };
 
   const renderCompetitors = (items) => {
-    if (
-      !Array.isArray(items) ||
-      items.length === 0
-    ) {
+    if (!Array.isArray(items) || items.length === 0) {
       return <p>Not available</p>;
     }
 
     return (
       <div className="competitor-list">
-        {items.map((competitor, index) => (
-          <div
-            className="competitor-item"
-            key={index}
-          >
-            <strong>
-              {competitor?.name ||
-                "Unknown competitor"}
-            </strong>
+        {items.map((competitor, index) => {
+          const name =
+            typeof competitor === "string"
+              ? competitor
+              : competitor?.name || "Unknown competitor";
 
-            <p>
-              {competitor?.description ||
-                "Description not available."}
-            </p>
-          </div>
-        ))}
+          const description =
+            typeof competitor === "object" && competitor?.description
+              ? competitor.description
+              : "Description not available.";
+
+          return (
+            <div
+              className="competitor-item"
+              key={`${name}-${index}`}
+            >
+              <strong>{name}</strong>
+              <p>{description}</p>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -391,9 +393,13 @@ export default function Dashboard() {
                 : "Web Source"}
             </p>
 
-            {source.snippet && (
-              <p>{source.snippet}</p>
-            )}
+              {source.snippet && (
+                <p>
+                  {source.snippet.length > 250
+                    ? `${source.snippet.slice(0, 250)}...`
+                    : source.snippet}
+                </p>
+              )}
 
             {source.url && (
               <a
@@ -646,170 +652,84 @@ export default function Dashboard() {
             {/* ================= MARKET ANALYSIS ================= */}
 
             <div className="result-section">
-              <h3>
-                📊 Market Analysis
-              </h3>
+              <h3>📊 Market Analysis</h3>
 
               <div className="analysis-item">
-                <h4>
-                  Target Customers
-                </h4>
-
+                <h4>Target Customers</h4>
                 {renderList(
-                  generatedPlan
-                    .market_analysis
-                    ?.target_customers
+                  generatedPlan.market_analysis?.target_customers
                 )}
               </div>
 
               <div className="analysis-item">
-                <h4>
-                  Customer Problem
-                </h4>
-
+                <h4>Customer Problem</h4>
                 <p>
-                  {generatedPlan
-                    .market_analysis
-                    ?.customer_problem ||
+                  {generatedPlan.market_analysis?.customer_problem ||
                     "Not available"}
                 </p>
               </div>
 
               <div className="analysis-item">
-                <h4>
-                  Market Demand
-                </h4>
-
+                <h4>Market Demand</h4>
                 <p>
-                  {generatedPlan
-                    .market_analysis
-                    ?.market_demand ||
+                  {generatedPlan.market_analysis?.market_demand ||
                     "Not available"}
                 </p>
               </div>
 
               <div className="analysis-item">
-                <h4>
-                  Opportunities
-                </h4>
-
+                <h4>Opportunities</h4>
                 {renderList(
-                  generatedPlan
-                    .market_analysis
-                    ?.opportunities
-                )}
-              </div>
-
-              {/* CORRECT COMPETITOR SECTION */}
-
-              <div className="analysis-item">
-                <h4>
-                  Competitors / Alternatives
-                </h4>
-
-                {renderCompetitors(
-                  generatedPlan
-                    .market_analysis
-                    ?.competitors_or_alternatives
+                  generatedPlan.market_analysis?.opportunities
                 )}
               </div>
 
               <div className="analysis-item">
-                <h4>
-                  Market Gaps
-                </h4>
-
-                {renderList(
-                  generatedPlan
-                    .market_analysis
-                    ?.market_gaps
-                )}
-              </div>
-
-              <div className="analysis-item">
-                <h4>
-                  Key Insights
-                </h4>
-
-                {renderList(
-                  generatedPlan
-                    .market_analysis
-                    ?.market_insights
-                )}
+                <h4>🌐 Market Trends</h4>
+                {renderWebSources("Market Trends")}
               </div>
             </div>
 
-            {/* ================= CURRENT WEB RESEARCH ================= */}
+            {/* ================= COMPETITORS / ALTERNATIVES ================= */}
 
             <div className="result-section">
-              <h3>
-                🌐 Current Web Research
-              </h3>
+              <h3>🏢 Competitors / Alternatives</h3>
 
               <div className="analysis-item">
-                <h4>
-                  Market Trends
-                </h4>
-
-                {renderWebSources(
-                  "Market Trends"
+                {renderCompetitors(
+                  generatedPlan.market_analysis?.competitors_or_alternatives ||
+                    generatedPlan.market_analysis?.competitors
                 )}
               </div>
 
               <div className="analysis-item">
-                <h4>
-                  Competitors & Alternatives
-                </h4>
-
-                {renderWebSources(
-                  "Competitors & Alternatives"
-                )}
-              </div>
-
-              {/* Recent developments are intentionally
-                  kept here as a separate subsection,
-                  not as an empty card. */}
-
-              <div className="analysis-item">
-                <h4>
-                  Recent Developments
-                </h4>
-
-                {renderWebSources(
-                  "Recent Developments"
-                )}
+                <h4>🌐 Competitors & Alternatives</h4>
+                {renderWebSources("Competitors & Alternatives")}
               </div>
             </div>
 
             {/* ================= OTHER MARKET ANALYSIS ================= */}
 
             <div className="result-section">
-              <h3>
-                💡 Other Market Analysis
-              </h3>
+              <h3>💡 Other Market Analysis</h3>
 
               <div className="analysis-item">
-                <h4>
-                  Market Gaps
-                </h4>
-
+                <h4>Market Gaps</h4>
                 {renderList(
-                  generatedPlan
-                    .market_analysis
-                    ?.market_gaps
+                  generatedPlan.market_analysis?.market_gaps
                 )}
               </div>
 
               <div className="analysis-item">
-                <h4>
-                  Key Insights
-                </h4>
-
+                <h4>Key Insights</h4>
                 {renderList(
-                  generatedPlan
-                    .market_analysis
-                    ?.market_insights
+                  generatedPlan.market_analysis?.market_insights
                 )}
+              </div>
+
+              <div className="analysis-item">
+                <h4>🌐 Recent Developments</h4>
+                {renderWebSources("Recent Developments")}
               </div>
             </div>
 
@@ -1073,77 +993,70 @@ export default function Dashboard() {
               </p>
             </section>
 
-            {/* ================= CHAT ================= */}
-
-            <section className="dashboard-card chat-card">
-              <div className="card-heading">
-                <div className="card-icon">
-                  💬
-                </div>
-
-                <div>
-                  <h2>
-                    AI Mentor Chat
-                  </h2>
-
-                  <p>
-                    Ask questions about your
-                    startup
-                  </p>
-                </div>
-              </div>
-
-              <div className="chat-history">
-                {chatHistory.map(
-                  (message, index) => (
-                    <div
-                      key={index}
-                      className={`chat-message ${
-                        message.sender === "You"
-                          ? "user-message"
-                          : ""
-                      }`}
-                    >
-                      <strong>
-                        {message.sender}
-                      </strong>
-
-                      <div className="chat-message-content">
-                        <ReactMarkdown>
-                          {message.text}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  )
-                )}
-              </div>
-
-              <form
-                className="chat-form"
-                onSubmit={
-                  handleSendMessage
-                }
-              >
-                <input
-                  type="text"
-                  placeholder="Ask your AI mentor..."
-                  value={chatMessage}
-                  onChange={(event) =>
-                    setChatMessage(
-                      event.target.value
-                    )
-                  }
-                />
-
-                <button type="submit">
-                  Send
-                </button>
-              </form>
-            </section>
-
-          </section>
+         </section>
         )}
+        {/* ================= AI MENTOR CHAT ================= */}
+
+        <section className="dashboard-card chat-card">
+          <div className="card-heading">
+            <div className="card-icon">
+              💬
+            </div>
+
+            <div>
+              <h2>
+                AI Mentor Chat
+              </h2>
+
+              <p>
+                Ask questions about your startup
+              </p>
+            </div>
+          </div>
+
+          <div className="chat-history">
+            {chatHistory.map((message, index) => (
+              <div
+                key={index}
+                className={`chat-message ${
+                  message.sender === "You"
+                    ? "user-message"
+                    : ""
+                }`}
+              >
+                <strong>
+                  {message.sender}
+                </strong>
+
+                <div className="chat-message-content">
+                  <ReactMarkdown>
+                    {message.text}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <form
+            className="chat-form"
+            onSubmit={handleSendMessage}
+          >
+            <input
+              type="text"
+              placeholder="Ask your AI mentor..."
+              value={chatMessage}
+              onChange={(event) =>
+                setChatMessage(event.target.value)
+              }
+            />
+
+            <button type="submit">
+              Send
+            </button>
+          </form>
+        </section>
       </div>
     </div>
+    
   );
 }

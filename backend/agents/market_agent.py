@@ -11,6 +11,10 @@ from .state import StartupState
 load_dotenv()
 
 
+# ============================================================
+# COMPETITOR / ALTERNATIVE MODEL
+# ============================================================
+
 class CompetitorAlternative(BaseModel):
     name: str = Field(
         description=(
@@ -26,6 +30,10 @@ class CompetitorAlternative(BaseModel):
         )
     )
 
+
+# ============================================================
+# MARKET ANALYSIS MODEL
+# ============================================================
 
 class MarketAnalysis(BaseModel):
     target_customers: list[str] = Field(
@@ -76,101 +84,202 @@ class MarketAnalysis(BaseModel):
     )
 
 
+# ============================================================
+# GEMINI MODEL
+# ============================================================
+
 llm = ChatGoogleGenerativeAI(
     model="gemini-3.5-flash-lite",
     google_api_key=os.getenv("GEMINI_API_KEY"),
     temperature=0.2,
 )
 
-
 structured_llm = llm.with_structured_output(MarketAnalysis)
 
 
+# ============================================================
+# WEB SEARCH
+# ============================================================
+
 def search_current_market_information(startup_idea: str):
     """
-    Search the web for current information related to the startup idea.
+    Search current web information in three separate categories.
+
+    Each category keeps its own results so that duplicate URLs
+    between categories do not remove an entire category.
     """
 
     queries = [
         {
             "category": "Market Trends",
-            "query": f"{startup_idea} market trends 2026",
+            "queries": [
+                f"{startup_idea} market trends 2026",
+                f"{startup_idea} industry trends 2026",
+            ],
         },
         {
             "category": "Competitors & Alternatives",
-            "query": (
-                f"{startup_idea} competitors companies "
-                f"products platforms alternatives 2026"
-            ),
+            "queries": [
+                f"{startup_idea} companies products solutions competitors",
+            ],
+        },
+        {
+            "category": "Competitors & Alternatives",
+            "queries": [
+                f"{startup_idea} similar companies alternative solutions",
+            ],
+        },
+        {
+            "category": "Competitors & Alternatives",
+            "queries": [
+                f"{startup_idea} leading companies technology providers",
+            ],
         },
         {
             "category": "Recent Developments",
-            "query": (
-                f"{startup_idea} recent developments "
-                f"technology companies 2026"
-            ),
+            "queries": [
+                f"{startup_idea} latest news developments 2026",
+                f"{startup_idea} recent technology developments 2026",
+            ],
         },
     ]
 
-    all_results = []
+    categorized_results = {
+        "Market Trends": [],
+        "Competitors & Alternatives": [],
+        "Recent Developments": [],
+    }
+
+    # --------------------------------------------------------
+    # Search each category independently
+    # --------------------------------------------------------
 
     for search in queries:
-        try:
-            results = DDGS().text(
-                search["query"],
-                max_results=5,
-            )
 
-            for result in results:
-                all_results.append(
-                    {
-                        "category": search["category"],
-                        "title": result.get("title", ""),
-                        "url": result.get("href", ""),
-                        "snippet": result.get("body", ""),
-                    }
+        category = search["category"]
+
+        for query in search["queries"]:
+
+            try:
+                results = DDGS().text(
+                    query,
+                    max_results=5,
                 )
 
-        except Exception as error:
-            print(
-                f"Web search failed for '{search['query']}': {error}"
-            )
+                for result in results:
 
-    # Remove duplicate URLs
-    unique_results = []
-    seen_urls = set()
+                    title = result.get("title", "").strip()
+                    url = result.get("href", "").strip()
+                    snippet = result.get("body", "").strip()
 
-    for result in all_results:
-        url = result.get("url", "").strip()
+                    if not url:
+                        continue
 
-        if url and url not in seen_urls:
+                    categorized_results[category].append(
+                        {
+                            "category": category,
+                            "title": title,
+                            "url": url,
+                            "snippet": snippet,
+                        }
+                    )
+
+            except Exception as error:
+                print(
+                    f"Web search failed for '{query}': {error}"
+                )
+
+    # --------------------------------------------------------
+    # Remove duplicates INSIDE each category only
+    # --------------------------------------------------------
+
+    final_results = []
+
+    for category, results in categorized_results.items():
+
+        seen_urls = set()
+        category_results = []
+
+        for result in results:
+
+            url = result["url"]
+
+            if url in seen_urls:
+                continue
+
             seen_urls.add(url)
-            unique_results.append(result)
+            category_results.append(result)
 
-    return unique_results[:15]
+            # Keep maximum 5 results per category
+            if len(category_results) >= 5:
+                break
 
+        final_results.extend(category_results)
+
+    print(
+        "Web research results:",
+        {
+            category: len(results)
+            for category, results in categorized_results.items()
+        },
+    )
+
+    return final_results
+
+
+# ============================================================
+# MARKET AGENT
+# ============================================================
 
 def market_agent(state: StartupState):
+
     startup_idea = state["startup_idea"]
     founder_profile = state.get("founder_profile") or {}
 
+    # --------------------------------------------------------
     # Get current information from the web
-    web_results = search_current_market_information(startup_idea)
+    # --------------------------------------------------------
+
+    web_results = search_current_market_information(
+        startup_idea
+    )
+
+    # --------------------------------------------------------
+    # Prepare web information for Gemini
+    # --------------------------------------------------------
 
     web_information_parts = []
 
-    for index, result in enumerate(web_results, start=1):
+    for index, result in enumerate(
+        web_results,
+        start=1,
+    ):
+
         web_information_parts.append(
             f"""
 SOURCE {index}
-Category: {result["category"]}
-Title: {result["title"]}
-URL: {result["url"]}
-Information: {result["snippet"]}
+
+Category:
+{result["category"]}
+
+Title:
+{result["title"]}
+
+URL:
+{result["url"]}
+
+Information:
+{result["snippet"]}
 """
         )
 
-    web_information = "\n".join(web_information_parts)
+    web_information = "\n".join(
+        web_information_parts
+    )
+
+    # --------------------------------------------------------
+    # Gemini Market Agent Prompt
+    # --------------------------------------------------------
 
     prompt = f"""
 You are the Market Agent in an AI Personalized Startup Mentor.
@@ -203,37 +312,45 @@ Analyze the following:
 6. Potential market gaps
 7. Practical market insights
 
-COMPETITORS / ALTERNATIVES REQUIREMENT:
+
+============================================================
+COMPETITORS / ALTERNATIVES
+============================================================
 
 For competitors_or_alternatives:
 
 - Find REAL companies, products, platforms, or alternative solutions.
-- Prefer names found in the current web results.
+- Prefer names that appear in the current web research.
 - Do not invent competitors.
-- Give both the competitor name and a short description.
-- The description must explain what the competitor or alternative does.
-- Give several relevant competitors/alternatives when the web results
-  contain enough information.
-- If a result mentions a company or product that is clearly relevant,
+- Do not create fictional company names.
+- Give both the competitor name and description.
+- Explain briefly what each competitor or alternative does.
+- Include several relevant competitors when enough web evidence exists.
+- If the web research contains a clearly relevant company or product,
   consider it as a possible competitor or alternative.
-- Do not return only names.
-- Every competitor must have:
+- Every competitor must contain:
     name
     description
 
-MARKET ANALYSIS REQUIREMENTS:
 
-Use the current web information to identify:
+============================================================
+CURRENT WEB RESEARCH
+============================================================
 
-- Real companies or products
+Use the web research to identify:
+
 - Current market trends
+- Real companies and products
+- Competitors and alternatives
 - Recent developments
-- Existing competitors
 - Current opportunities
-- Current customer needs
+- Customer needs
 - Market gaps
 
-IMPORTANT RULES:
+
+============================================================
+IMPORTANT RULES
+============================================================
 
 - Prefer current web information over unsupported assumptions.
 - Do not invent companies.
@@ -244,17 +361,29 @@ IMPORTANT RULES:
 - Do not treat every web result as automatically trustworthy.
 - Use web results as evidence.
 - If current information is limited, clearly use general reasoning.
-- Personalize the analysis using the user's:
-  - Skills
-  - Interests
-  - Experience
-  - Budget
-  - Goals
+- Do not claim that a company is a competitor unless it is relevant
+  to the startup idea.
+
+Personalize the analysis using the user's:
+
+- Skills
+- Interests
+- Experience
+- Budget
+- Goals
 
 Keep the output practical, clear, and easy to understand.
 """
 
+    # --------------------------------------------------------
+    # Generate structured market analysis
+    # --------------------------------------------------------
+
     result = structured_llm.invoke(prompt)
+
+    # --------------------------------------------------------
+    # Return both AI analysis and actual web sources
+    # --------------------------------------------------------
 
     return {
         "market_analysis": result.model_dump(),
