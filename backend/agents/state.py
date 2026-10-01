@@ -7,6 +7,8 @@ class StartupState(TypedDict, total=False):
     mentor: str
 
     web_sources: list[dict]
+    financial_web_sources: list[dict]
+    risk_web_sources: list[dict]
 
     market_analysis: dict
     financial_analysis: dict

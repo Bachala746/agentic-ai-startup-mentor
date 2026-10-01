@@ -415,7 +415,61 @@ export default function Dashboard() {
       </div>
     );
   };
+  const renderAgentWebSources = (sources, title) => {
+    if (!sources || sources.length === 0) {
+      return (
+        <p>No current web sources available.</p>
+      );
+    }
 
+    return (
+      <div className="web-source-list">
+        <h3>{title}</h3>
+
+        {sources.map((source, index) => (
+          <div
+            className="web-source-item"
+            key={`${title}-${index}`}
+          >
+            <strong>
+              {source.title || "Web Research Result"}
+            </strong>
+
+            <p>
+              <strong>Source:</strong>{" "}
+              {source.url
+                ? (() => {
+                    try {
+                      return new URL(source.url).hostname;
+                    } catch {
+                      return "Web Source";
+                    }
+                  })()
+                : "Web Source"}
+            </p>
+
+            {source.snippet && (
+              <p>
+                {source.snippet.length > 250
+                  ? `${source.snippet.slice(0, 250)}...`
+                  : source.snippet}
+              </p>
+            )}
+
+            {source.url && (
+              <a
+                href={source.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                🔗 View Source
+              </a>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
   return (
     <div className="dashboard-page">
       <div className="dashboard-container">
@@ -812,6 +866,10 @@ export default function Dashboard() {
                     ?.recommendations
                 )}
               </div>
+              {renderAgentWebSources(
+                generatedPlan.financial_web_sources,
+                "💰 Financial Web Research"
+              )}
             </div>
 
             {/* ================= RISK ANALYSIS ================= */}
@@ -892,6 +950,10 @@ export default function Dashboard() {
                     ?.mitigation_strategies
                 )}
               </div>
+              {renderAgentWebSources(
+                generatedPlan.risk_web_sources,
+                "⚠️ Risk Web Research"
+              )}
             </div>
 
             {/* ================= ROADMAP ================= */}

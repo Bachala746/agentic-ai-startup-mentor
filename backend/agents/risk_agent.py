@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
+from ddgs import DDGS
 
 from .state import StartupState
 
@@ -37,7 +38,6 @@ llm = ChatGoogleGenerativeAI(
     temperature=0.2,
 )
 
-
 structured_llm = llm.with_structured_output(RiskAnalysis)
 
 
@@ -47,10 +47,85 @@ def risk_agent(state: StartupState):
     market_analysis = state.get("market_analysis") or {}
     financial_analysis = state.get("financial_analysis") or {}
 
+    # -----------------------------------------
+    # Dynamic Risk Web Search
+    # -----------------------------------------
+
+    queries = [
+        {
+            "category": "Technical and Operational Risks",
+            "queries": [
+                f"{startup_idea} technical risks",
+                f"{startup_idea} operational risks",
+            ],
+        },
+        {
+            "category": "Security and Privacy Risks",
+            "queries": [
+                f"{startup_idea} security risks",
+                f"{startup_idea} privacy risks",
+            ],
+        },
+        {
+            "category": "Legal and Regulatory Risks",
+            "queries": [
+                f"{startup_idea} legal risks",
+                f"{startup_idea} regulations",
+            ],
+        },
+    ]
+
+    web_results = []
+
+    for search in queries:
+        category = search["category"]
+
+        for query in search["queries"]:
+            try:
+                results = DDGS().text(
+                    query,
+                    max_results=5
+                )
+
+                for result in results:
+                    web_results.append(
+                        {
+                            "category": category,
+                            "title": result.get("title", ""),
+                            "url": result.get("href", ""),
+                            "snippet": result.get("body", ""),
+                        }
+                    )
+
+            except Exception as error:
+                print(
+                    f"Risk web search failed for '{query}': {error}"
+                )
+
+    # Remove duplicate URLs
+    unique_results = []
+    seen_urls = set()
+
+    for result in web_results:
+        url = result.get("url", "")
+
+        if url and url not in seen_urls:
+            seen_urls.add(url)
+            unique_results.append(result)
+
+    # Keep maximum 15 sources
+    web_results = unique_results[:15]
+    print(f"Risk web results: {len(web_results)}")
+
+    # -----------------------------------------
+    # Risk AI Analysis
+    # -----------------------------------------
+
     prompt = f"""
 You are the Risk Agent in an AI Personalized Startup Mentor.
 
-Analyze the risks and challenges of the startup.
+Analyze the risks and challenges of the startup using the startup
+information and current web research provided below.
 
 Startup Idea:
 {startup_idea}
@@ -64,6 +139,9 @@ Market Agent Analysis:
 Finance Agent Analysis:
 {financial_analysis}
 
+Current Risk Web Research:
+{web_results}
+
 Analyze:
 
 1. Market risks
@@ -73,18 +151,27 @@ Analyze:
 5. Implementation challenges
 6. Practical mitigation strategies
 
+Use the web research when it is relevant to the startup.
+
 Personalize the analysis using the founder's:
 - Skills
 - Experience
 - Budget
 - Goals
 
-Do not invent precise statistics or unsupported facts.
-Keep the analysis practical and easy to understand.
+Important rules:
+
+- Do not invent precise statistics or unsupported facts.
+- Do not present guesses as real facts.
+- Use the provided web research as supporting information.
+- If the web research does not provide enough evidence, give a
+  practical general risk analysis instead of inventing facts.
+- Keep the analysis practical and easy to understand.
 """
 
     result = structured_llm.invoke(prompt)
 
     return {
-        "risk_analysis": result.model_dump()
+        "risk_analysis": result.model_dump(),
+        "risk_web_sources": web_results,
     }

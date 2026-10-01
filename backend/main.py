@@ -225,6 +225,14 @@ def startup_plan(request: StartupRequest):
                 "web_sources",
                 [],
             ),
+            "financial_web_sources": result.get(
+                "financial_web_sources",
+                [],
+            ),
+            "risk_web_sources": result.get(
+                "risk_web_sources",
+                [],
+            ),
         }
 
     except Exception as error:
