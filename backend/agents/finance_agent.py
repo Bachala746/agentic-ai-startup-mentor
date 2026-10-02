@@ -49,73 +49,91 @@ def finance_agent(state: StartupState):
     # -----------------------------------------
     # Dynamic Finance Web Search
     # -----------------------------------------
-
+    
     queries = [
-        {
-            "category": "Financial Costs",
-            "queries": [
-                f"{startup_idea} startup costs",
-                f"{startup_idea} business expenses",
-            ],
-        },
-        {
-            "category": "Pricing and Revenue",
-            "queries": [
-                f"{startup_idea} pricing revenue",
-                f"{startup_idea} business model",
-            ],
-        },
-        {
-            "category": "Funding and Investment",
-            "queries": [
-                f"{startup_idea} startup funding",
-                f"{startup_idea} investment",
-            ],
-        },
+        f"{startup_idea} cost pricing",
+        f"{startup_idea} revenue business model",
+        f"{startup_idea} funding investment grant",
+        f"{startup_idea} financial feasibility economic impact",
+    ]
+
+    finance_keywords = [
+        "cost",
+        "pricing",
+        "price",
+        "revenue",
+        "business model",
+        "funding",
+        "investment",
+        "financial",
+        "finance",
+        "expense",
+        "budget",
+        "profit",
+        "grant",
+        "economic",
+        "roi",
     ]
 
     web_results = []
 
-    for search in queries:
-        category = search["category"]
+    for query in queries:
+        try:
+            results = list(
+                DDGS().text(
+                    query,
+                    max_results=8
+                )
+            )
 
-        for search in queries:
-            category = search["category"]
+            for result in results:
+                title = result.get("title", "")
+                snippet = result.get("body", "")
+                url = result.get("href", "")
 
-            for query in search["queries"]:
-                try:
-                    results = DDGS().text(
-                        query,
-                        max_results=5
-                    )
+                text = f"{title} {snippet}".lower()
 
-                    results = list(results)
+                #Keep only financially relevant sources
+                
+                finance_matches = sum(
+                    1 for keyword in finance_keywords
+                    if keyword in text
+                )
 
-                    # Fallback search if no results
-                    if not results:
-                        simple_query = f"{startup_idea} finance"
+                strong_finance_keywords = [
+                    "pricing",
+                    "price",
+                    "revenue",
+                    "funding",
+                    "investment",
+                    "financial",
+                    "finance",
+                    "expense",
+                    "business model",
+                    "profit",
+                    "grant",
+                    "budget",
+                ]
 
-                        results = list(
-                            DDGS().text(
-                                simple_query,
-                                max_results=5
-                            )
-                        )
+                strong_matches = sum(
+                    1 for keyword in strong_finance_keywords
+                    if keyword in text
+                )
 
-                    for result in results:
-                        web_results.append(
-                            {
-                                "category": category,
-                                "title": result.get("title", ""),
-                                "url": result.get("href", ""),
-                                "snippet": result.get("body", ""),
-                            }
-                        )
+                if strong_matches >= 1 and url:
+                    web_results.append({
+                        "category": "Financial Analysis",
+                        "title": title,
+                        "url": url,
+                        "snippet": snippet,
+                        "relevance_score": strong_matches,
+                    })
 
-                except Exception as error:
-                    print(
-                        f"Finance web search failed for '{query}': {error}"
-                    )
+        except Exception as error:
+            print(
+                f"Finance web search failed for '{query}': {error}"
+            )
+
     # Remove duplicate URLs
     unique_results = []
     seen_urls = set()
@@ -127,8 +145,19 @@ def finance_agent(state: StartupState):
             seen_urls.add(url)
             unique_results.append(result)
 
-    # Keep maximum 15 sources
-    web_results = unique_results[:15]
+    # Highest financial relevance first
+    unique_results.sort(
+        key=lambda x: x.get("relevance_score", 0),
+        reverse=True
+    )
+
+    # Keep only 3–5 relevant financial sources
+    web_results = unique_results[:5]
+
+    # Remove internal scoring before sending to frontend
+    for result in web_results:
+        result.pop("relevance_score", None)
+
     print(f"Finance web results: {len(web_results)}")
 
     # -----------------------------------------
