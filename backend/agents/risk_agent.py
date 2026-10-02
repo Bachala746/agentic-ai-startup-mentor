@@ -114,7 +114,50 @@ def risk_agent(state: StartupState):
             unique_results.append(result)
 
     # Keep maximum 15 sources
-    web_results = unique_results[:15]
+    risk_keywords = [
+        "risk",
+        "security",
+        "privacy",
+        "cybersecurity",
+        "data protection",
+        "legal",
+        "regulation",
+        "compliance",
+        "vulnerability",
+        "threat",
+        "breach",
+        "fraud",
+        "operational",
+        "technical",
+    ]
+
+    filtered_results = []
+
+    for result in unique_results:
+        text = (
+            f"{result.get('title', '')} "
+            f"{result.get('snippet', '')}"
+        ).lower()
+
+        risk_matches = sum(
+            1 for keyword in risk_keywords
+            if keyword in text
+        )
+
+        if risk_matches >= 1:
+            result["relevance_score"] = risk_matches
+            filtered_results.append(result)
+
+    filtered_results.sort(
+        key=lambda x: x.get("relevance_score", 0),
+        reverse=True
+    )
+
+    web_results = filtered_results[:5]
+
+    for result in web_results:
+        result.pop("relevance_score", None)
+
     print(f"Risk web results: {len(web_results)}")
 
     # -----------------------------------------
