@@ -13,5 +13,6 @@ class StartupState(TypedDict, total=False):
     market_analysis: dict
     financial_analysis: dict
     risk_analysis: dict
+    decision_analysis: dict
     final_recommendation: str
     roadmap: list[str]

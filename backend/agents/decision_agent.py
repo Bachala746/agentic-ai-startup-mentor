@@ -14,6 +14,9 @@ class DecisionAnalysis(BaseModel):
     overall_assessment: str = Field(
         description="Overall personalized assessment of the startup idea"
     )
+    decision_rationale: list[str] = Field(
+        description="Reasons supporting the overall assessment based on market, finance, and risk analysis"
+    )
     key_opportunities: list[str] = Field(
         description="Most important opportunities"
     )
@@ -84,12 +87,13 @@ Consider the founder's:
 Provide:
 
 1. Overall assessment
-2. Key opportunities
-3. Main considerations
-4. Main risks
-5. MVP direction
-6. Immediate next actions
-7. Step-by-step startup roadmap
+2. Decision rationale
+3. Key opportunities
+4. Main considerations
+5. Main risks
+6. MVP direction
+7. Immediate next actions
+8. Step-by-step startup roadmap
 
 Do not simply concatenate the three agent outputs.
 Synthesize them into practical guidance.
@@ -102,6 +106,7 @@ Keep the recommendations realistic and easy to understand.
 
     return {
         "final_recommendation": result.overall_assessment,
+        "decision_rationale": result.decision_rationale,
         "roadmap": result.roadmap,
         "decision_analysis": result.model_dump(),
     }

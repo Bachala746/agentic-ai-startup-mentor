@@ -819,3 +819,18 @@
 .save-plan-container {
   margin-top: 24px;
 }
+
+.decision-rationale-list {
+  margin: 0;
+  padding-left: 24px;
+}
+
+.decision-rationale-list li {
+  padding-left: 4px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.save-plan-container {
+  margin-bottom: 24px;
+}

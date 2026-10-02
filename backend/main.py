@@ -221,6 +221,7 @@ def startup_plan(request: StartupRequest):
                 "roadmap",
                 [],
             ),
+            "decision_analysis": result.get("decision_analysis", {}),
             "web_sources": result.get(
                 "web_sources",
                 [],

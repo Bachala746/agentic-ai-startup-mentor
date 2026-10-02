@@ -1013,6 +1013,22 @@ export default function Dashboard() {
               )}
             </div>
 
+            {/* ================ DECISION RATIONALE ================ */}
+
+            {generatedPlan.decision_analysis?.decision_rationale?.length > 0 && (
+              <div className="result-section">
+                <h3>🧠 Decision Rationale</h3>
+
+                <ul className="decision-rationale-list">
+                  {generatedPlan.decision_analysis.decision_rationale.map(
+                    (reason, index) => (
+                      <li key={index}>{reason}</li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
+
             {/* ================= FINAL DECISION ================= */}
 
             <div className="result-section">
