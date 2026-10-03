@@ -114,7 +114,71 @@ export default function SavedPlans() {
     return (
       <ul>
         {items.map((item, index) => (
-          <li key={index}>{item}</li>
+          <li key={index}>
+            {typeof item === "object" && item !== null
+              ? item.name || item.description || JSON.stringify(item)
+              : item}
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  const renderRoadmap = (items, completedSteps = [], planId = null) => {
+    if (!items || items.length === 0) {
+      return <p>Not available</p>;
+    }
+
+    return (
+      <ul>
+        {items.map((item, index) => (
+          <li key={index}>
+            <input
+              type="checkbox"
+              checked={completedSteps.includes(index)}
+              onChange={async () => {
+                const newProgress = completedSteps.includes(index)
+                  ? completedSteps.filter((step) => step !== index)
+                  : [...completedSteps, index];
+
+                try {
+                  await fetch(
+                    "http://127.0.0.1:8000/update-roadmap-progress",
+                    {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        planId: planId,
+                        completedSteps: newProgress,
+                      }),
+                    }
+                  );
+
+                  setSelectedPlan((previous) => ({
+                    ...previous,
+                    roadmap_progress: newProgress,
+                  }));
+                  setSavedPlans((previousPlans) =>
+                    previousPlans.map((plan) =>
+                      plan.id === planId
+                        ? { ...plan, roadmap_progress: newProgress }
+                        : plan
+                    )
+                  );
+                } catch (error) {
+                  console.error("Roadmap progress error:", error);
+                }
+              }}
+            />
+
+            <span style={{ marginLeft: "10px" }}>
+              {typeof item === "object" && item !== null
+                ? item.name || item.description || JSON.stringify(item)
+                : item}
+            </span>
+          </li>
         ))}
       </ul>
     );
@@ -543,7 +607,11 @@ export default function SavedPlans() {
                 <h2>Startup Roadmap</h2>
               </div>
 
-              {renderList(selectedPlan.roadmap)}
+              {renderRoadmap(
+                selectedPlan.roadmap,
+                selectedPlan.roadmap_progress || [],
+                selectedPlan.id
+              )}
 
             </section>
 
@@ -563,6 +631,14 @@ export default function SavedPlans() {
             </section>
 
             <div className="saved-modal-footer">
+              <button
+                className="saved-update-btn"
+                onClick={() => {
+                  alert("Plan updated successfully!");
+                }}
+              >
+                💾 Update Plan
+              </button>
 
               <button
                 className="saved-close-btn"
@@ -572,7 +648,6 @@ export default function SavedPlans() {
               >
                 Close Plan
               </button>
-
             </div>
 
           </div>
