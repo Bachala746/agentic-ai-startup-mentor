@@ -305,6 +305,52 @@ export default function Dashboard() {
     }
   };
 
+  const handleIntelligencePDF = async (view = false) => {
+    if (!generatedPlan?.startup_intelligence) {
+      alert("Startup Intelligence Report is not available.");
+      return;
+    }
+
+    const reportWindow = view
+      ? window.open("", "_blank")
+      : null;
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/startup-intelligence/pdf",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            startupIdea,
+            report: generatedPlan.startup_intelligence,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF.");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      if (view) {
+        reportWindow.location.href = url;
+      } else {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "startup_intelligence_report.pdf";
+        link.click();
+      }
+    } catch (error) {
+      if (reportWindow) reportWindow.close();
+      alert(error.message);
+    }
+  };
+
   const renderList = (items) => {
     if (!Array.isArray(items) || items.length === 0) {
       return <p>Not available</p>;
@@ -1010,6 +1056,28 @@ export default function Dashboard() {
                 <p>
                   Roadmap not available.
                 </p>
+              )}
+            </div>
+            <div className="result-section">
+              <h3>🧠 Startup Intelligence Report</h3>
+
+              {generatedPlan.startup_intelligence ? (
+                <>
+                  <p>
+                    Funding, team, competitor and financial analysis
+                    for your startup.
+                  </p>
+
+                  <button onClick={() => handleIntelligencePDF(true)}>
+                    👁️ View Report
+                  </button>
+
+                  <button onClick={() => handleIntelligencePDF(false)}>
+                    📥 Download PDF
+                  </button>
+                </>
+              ) : (
+                <p>Startup Intelligence Report not available.</p>
               )}
             </div>
 

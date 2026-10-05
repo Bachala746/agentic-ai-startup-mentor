@@ -16,3 +16,5 @@ class StartupState(TypedDict, total=False):
     decision_analysis: dict
     final_recommendation: str
     roadmap: list[str]
+
+    startup_intelligence: dict

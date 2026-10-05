@@ -1,6 +1,11 @@
 import os
 import json
 
+import tempfile
+from fastapi.responses import FileResponse
+from fastapi import BackgroundTasks
+from pdf_generator import generate_startup_intelligence_pdf
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -10,7 +15,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from agents.graph import startup_graph
 from database import create_tables
 from database import get_connection
-
+from agents.startup_intelligence_agent import startup_intelligence_agent
 
 load_dotenv()
 
@@ -71,6 +76,9 @@ class SavePlanRequest(BaseModel):
     roadmapProgress: list[int] = []
     finalDecision: str
 
+class IntelligencePDFRequest(BaseModel):
+    startupIdea: str
+    report: dict
 
 class RoadmapProgressRequest(BaseModel):
     planId: int
@@ -226,6 +234,10 @@ def startup_plan(request: StartupRequest):
                 "web_sources",
                 [],
             ),
+            "startup_intelligence": result.get(
+                "startup_intelligence",
+                {}
+            ),    
             "financial_web_sources": result.get(
                 "financial_web_sources",
                 [],
@@ -501,3 +513,39 @@ IMPORTANT:
                 "right now."
             )
         }
+
+@app.post("/startup-intelligence/pdf")
+def startup_intelligence_pdf(
+    request: IntelligencePDFRequest,
+    background_tasks: BackgroundTasks,
+):
+    try:
+        temp_file = tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=".pdf"
+        )
+        temp_file.close()
+
+        generate_startup_intelligence_pdf(
+            request.startupIdea,
+            request.report,
+            temp_file.name,
+        )
+
+        background_tasks.add_task(
+            os.unlink,
+            temp_file.name
+        )
+
+        return FileResponse(
+            temp_file.name,
+            media_type="application/pdf",
+            filename="startup_intelligence_report.pdf",
+        )
+
+    except Exception as error:
+        print("PDF generation error:", error)
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to generate PDF.",
+        )
