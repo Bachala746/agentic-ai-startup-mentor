@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import SavedPlans from "./pages/SavedPlans";
 import IdeaOverview from "./pages/IdeaOverview";
+import ProfileIdeaGeneration from "./pages/ProfileIdeaGeneration";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
       <Route path="/saved-plans" element={<SavedPlans />} />
       <Route path="/agent-insights" element={<AgentInsights />} />
       <Route path="/idea-overview" element={<IdeaOverview />}/>
+      <Route path="/profile-idea-generation" element={<ProfileIdeaGeneration />}/>
     </Routes>
   );
 }

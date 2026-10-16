@@ -1,0 +1,373 @@
+/* =========================================================
+   Profile Idea Generation - Dark Purple Theme
+   ========================================================= */
+
+:root {
+  --purple-glow: rgba(139, 92, 246, 0.35);
+  --purple-light-glow: rgba(168, 85, 247, 0.2);
+  --purple-primary: #8b5cf6;
+  --purple-hover: #7c3aed;
+  --purple-deep: #6d28d9;
+  --purple-card-bg: rgba(22, 19, 41, 0.7);
+  --purple-border: rgba(139, 92, 246, 0.25);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+}
+
+/* Discovery Form Layout */
+.profile-discovery-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Banner Card */
+.profile-banner-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: linear-gradient(135deg, rgba(30, 22, 56, 0.85) 0%, rgba(18, 14, 38, 0.95) 100%);
+  border: 1px solid var(--purple-border);
+  padding: 1.5rem 1.75rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(109, 40, 217, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.banner-icon-badge {
+  font-size: 2rem;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(109, 40, 217, 0.05) 70%);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+.profile-banner-card h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.35rem 0;
+  letter-spacing: -0.01em;
+}
+
+.profile-banner-card p {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Sections Grid */
+.profile-sections-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .profile-sections-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Section Card */
+.profile-section-card {
+  background: var(--purple-card-bg);
+  border: 1px solid var(--purple-border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.profile-section-card:hover {
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: 0 6px 24px var(--purple-light-glow);
+}
+
+/* Section Header */
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.section-number {
+  background: linear-gradient(135deg, var(--purple-primary), var(--purple-deep));
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  box-shadow: 0 0 10px var(--purple-glow);
+}
+
+.section-header h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #f8fafc;
+  margin: 0 0 0.25rem 0;
+}
+
+.section-header p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Chips Container */
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.profile-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.profile-chip:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #ffffff;
+}
+
+.profile-chip.chip-active {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(109, 40, 217, 0.35) 100%);
+  border-color: var(--purple-primary);
+  color: #e9d5ff;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
+  font-weight: 600;
+}
+
+/* Custom Input Group (Add custom chip) */
+.custom-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.custom-input-group input,
+.profile-text-input {
+  flex: 1;
+  background: rgba(15, 12, 28, 0.7);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  color: #f1f5f9;
+  font-size: 0.85rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-input-group input:focus,
+.profile-text-input:focus,
+.profile-textarea:focus {
+  outline: none;
+  border-color: var(--purple-primary);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+}
+
+.add-chip-btn {
+  background: rgba(139, 92, 246, 0.2);
+  border: 1px solid var(--purple-border);
+  color: #c4b5fd;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-chip-btn:hover {
+  background: var(--purple-primary);
+  color: #ffffff;
+  box-shadow: 0 0 12px var(--purple-glow);
+}
+
+/* Vertical Radio Group Boxes */
+.radio-group-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.radio-item-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.65rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.radio-item-box:hover {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.radio-item-box input[type="radio"] {
+  accent-color: var(--purple-primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Textarea */
+.profile-textarea {
+  background: rgba(15, 12, 28, 0.7);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: #f1f5f9;
+  font-size: 0.85rem;
+  resize: vertical;
+  line-height: 1.45;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Bottom Action Bar */
+.profile-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(24, 18, 48, 0.9) 0%, rgba(15, 12, 30, 0.95) 100%);
+  border: 1px solid var(--purple-border);
+  padding: 1.25rem 1.75rem;
+  border-radius: 14px;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .profile-actions-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.actions-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.actions-info strong {
+  color: #d8b4fe;
+  font-size: 0.9rem;
+}
+
+/* Generate Ideas Button */
+.generate-ideas-btn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  color: #ffffff;
+  border: 1px solid rgba(192, 132, 252, 0.4);
+  padding: 0.95rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 18px var(--purple-glow);
+  white-space: nowrap;
+}
+
+.generate-ideas-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+  box-shadow: 0 6px 24px rgba(147, 51, 234, 0.45);
+}
+
+.generate-ideas-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Button Spinner */
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Purple Pulse Indicator for Discovery Agents */
+.purple-pulse {
+  background: rgba(139, 92, 246, 0.12) !important;
+  border: 1px solid rgba(139, 92, 246, 0.3) !important;
+  color: #c4b5fd !important;
+}
+
+.purple-status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #a855f7;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 10px #a855f7;
+  animation: pulse-dot 1.8s infinite;
+}
+
+@keyframes pulse-dot {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 7px rgba(168, 85, 247, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+  }
+}
