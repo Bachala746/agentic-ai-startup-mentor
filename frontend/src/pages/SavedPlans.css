@@ -913,6 +913,70 @@
 
   border-radius: 10px;
 
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* =========================================
+   SAVED PLAN CARD SECTIONS & MODAL DESC
+========================================= */
+
+.saved-plan-desc {
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.saved-plan-sections {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.saved-plan-section-item {
+  background: rgba(11, 15, 25, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.saved-plan-section-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.saved-plan-section-row .saved-plan-section-item {
+  flex: 1;
+  min-width: 200px;
+}
+
+.saved-plan-section-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #818cf8;
+  margin-bottom: 4px;
+}
+
+.saved-plan-section-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.saved-cost-text {
+  color: #34d399 !important;
+  font-weight: 600;
+}
+
+.saved-modal-desc {
+  margin: 8px 0 12px;
+  font-size: 0.92rem;
+  color: #cbd5e1;
+  line-height: 1.5;
 }

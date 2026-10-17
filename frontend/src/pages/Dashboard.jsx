@@ -3,6 +3,71 @@ import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import "./Dashboard.css";
 
+// Helper to convert JSON or object startup ideas into readable plain text
+function formatStartupIdea(raw) {
+  if (!raw) return "";
+
+  let idea = raw;
+
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (
+      (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+      (trimmed.startsWith("[") && trimmed.endsWith("]"))
+    ) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        idea = Array.isArray(parsed) ? parsed[0] : parsed;
+      } catch {
+        return raw;
+      }
+    } else {
+      return raw;
+    }
+  }
+
+  if (idea && typeof idea === "object") {
+    const parts = [];
+
+    const name = idea.name || idea.title;
+    const desc = idea.shortDescription || idea.description;
+
+    if (name && desc) {
+      parts.push(`${name}: ${desc}`);
+    } else if (name) {
+      parts.push(name);
+    } else if (desc) {
+      parts.push(desc);
+    }
+
+    if (idea.problem) {
+      const prob = Array.isArray(idea.problem)
+        ? idea.problem.join("; ")
+        : idea.problem;
+      parts.push(`Problem: ${prob}`);
+    }
+
+    if (idea.solution) {
+      const sol = Array.isArray(idea.solution)
+        ? idea.solution.join("; ")
+        : idea.solution;
+      parts.push(`Solution: ${sol}`);
+    }
+
+    if (idea.usp) {
+      parts.push(`USP: ${idea.usp}`);
+    }
+
+    if (idea.estimatedCost) {
+      parts.push(`Estimated Cost: ${idea.estimatedCost}`);
+    }
+
+    return parts.length > 0 ? parts.join("\n\n") : String(raw);
+  }
+
+  return String(raw);
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
@@ -51,7 +116,8 @@ export default function Dashboard() {
       localStorage.getItem("selectedStartupIdea");
 
     if (savedStartupIdea) {
-      setStartupIdea(savedStartupIdea);
+      // Format to readable text if saved as raw JSON
+      setStartupIdea(formatStartupIdea(savedStartupIdea));
     }
 
     const savedMentor =
@@ -82,6 +148,29 @@ export default function Dashboard() {
         "Technology & product architecture",
     },
   ];
+
+  const handleIdeaChange = (event) => {
+    const value = event.target.value;
+    const trimmed = value.trim();
+
+    // If user pastes raw JSON directly, format it to readable text
+    if (
+      (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+      (trimmed.startsWith("[") && trimmed.endsWith("]"))
+    ) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed && typeof parsed === "object") {
+          setStartupIdea(formatStartupIdea(parsed));
+          return;
+        }
+      } catch {
+        // Not valid JSON, leave as is
+      }
+    }
+
+    setStartupIdea(value);
+  };
 
   const handleGenerate = async (event) => {
     event.preventDefault();
@@ -461,6 +550,7 @@ export default function Dashboard() {
       </div>
     );
   };
+
   const renderAgentWebSources = (sources, title) => {
     if (!sources || sources.length === 0) {
       return (
@@ -516,6 +606,7 @@ export default function Dashboard() {
       </div>
     );
   };
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-container">
@@ -633,7 +724,7 @@ export default function Dashboard() {
 
         <div className="workspace-grid">
 
-          {/* Startup Idea */}
+          {/* Startup Idea (Textarea displays clean text, styling untouched) */}
 
           <section className="dashboard-card idea-card">
             <div className="card-heading">
@@ -654,11 +745,7 @@ export default function Dashboard() {
             >
               <textarea
                 value={startupIdea}
-                onChange={(event) =>
-                  setStartupIdea(
-                    event.target.value
-                  )
-                }
+                onChange={handleIdeaChange}
                 placeholder="Describe your startup idea in simple words..."
               />
 
@@ -1139,8 +1226,9 @@ export default function Dashboard() {
               </p>
             </section>
 
-         </section>
+          </section>
         )}
+
         {/* ================= AI MENTOR CHAT ================= */}
 
         <section className="dashboard-card chat-card">
@@ -1203,6 +1291,5 @@ export default function Dashboard() {
         </section>
       </div>
     </div>
-    
   );
 }
