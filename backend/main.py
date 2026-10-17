@@ -46,6 +46,11 @@ class IdeaOverviewRequest(BaseModel):
     startupIdea: str
 
 
+class ProfileIdeaRequest(BaseModel):
+    savedProfile: dict = {}
+    formResponses: dict = {}
+
+
 class IdeaOverview(BaseModel):
     title: str
     description: str
@@ -76,9 +81,11 @@ class SavePlanRequest(BaseModel):
     roadmapProgress: list[int] = []
     finalDecision: str
 
+
 class IntelligencePDFRequest(BaseModel):
     startupIdea: str
     report: dict
+
 
 class RoadmapProgressRequest(BaseModel):
     planId: int
@@ -90,6 +97,166 @@ def home():
     return {
         "message": "Agentic AI Startup Mentor Backend is running!"
     }
+
+
+@app.post("/generate-profile-ideas")
+def generate_profile_ideas(request: ProfileIdeaRequest):
+    try:
+        model = ChatGoogleGenerativeAI(
+            model=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+        )
+
+        saved = request.savedProfile or {}
+        form = request.formResponses or {}
+
+        prompt = f"""
+You are an expert AI startup mentor and venture strategist specializing in early-stage tech startups.
+
+Generate exactly 5 distinct, highly actionable, personalized startup ideas for this founder.
+
+=== FOUNDER SAVED PROFILE (From User Account) ===
+Full Name: {saved.get("fullName", "Not provided")}
+Technical Skills: {saved.get("skills", "Not provided")}
+Interests: {saved.get("interests", "Not provided")}
+Experience: {saved.get("experience", "Not provided")}
+Budget Tier: {saved.get("budget", "Not provided")}
+Startup Goals: {saved.get("goals", "Not provided")}
+
+=== CURRENT DISCOVERY PREFERENCES (From Form Input) ===
+Selected Skills: {form.get("skills", [])}
+Selected Interests: {form.get("interests", [])}
+Domain Expertise / Verticals: {form.get("domainKnowledge", [])}
+Experience Level: {form.get("experienceLevel", "Not provided")}
+Experience Summary: {form.get("experienceSummary", "None provided")}
+Capital & Starting Budget: {form.get("budget", "Not provided")}
+Startup Success Goal: {form.get("startupGoal", "Not provided")}
+Target Audience Preference: {form.get("targetAudience", "Not specified")}
+
+=== CONSISTENT SCORING RUBRIC (0 to 100) ===
+Calculate the match percentage for each idea using this consistent 100-point compatibility rubric:
+1. Skills Alignment (0-30 pts): How well the idea leverages the founder's technical & core superpowers.
+2. Domain & Interests Fit (0-25 pts): Fit with stated passions, curiosities, and industry domains.
+3. Experience & Feasibility (0-20 pts): Practical execution feasibility given the founder's experience level.
+4. Budget Compatibility (0-15 pts): Realism of launching within the founder's stated capital tier in India.
+5. Goal & Audience Congruence (0-10 pts): Alignment with ultimate ambition (Micro-SaaS, Unicorn, Agency, etc.) and audience.
+Sum these 5 factors to arrive at the final integer matchPercentage (between 60 and 98).
+Do not generate arbitrary numbers.
+
+=== CURRENCY & BUDGET CONSTRAINTS (INDIAN RUPEES - ₹) ===
+All cost estimates must be specified strictly in Indian Rupees (₹), NOT in US dollars ($).
+Do NOT use the dollar symbol ($). Provide realistic initial launch budget ranges for India based on the founder's budget tier:
+- If shoestring / zero-capital: ₹10,000 – ₹40,000 (domain, cloud hosting, essential APIs, open-source stack)
+- If bootstrapped: ₹50,000 – ₹2,50,000 (MVP development, initial marketing, basic cloud infrastructure, legal registration)
+- If angel / self-funded: ₹2,50,000 – ₹10,00,000 (specialist contractors, pilot acquisition, advanced tooling, compliance)
+- If high-capital / VC: ₹10,00,000 – ₹25,00,000+ (dedicated core team, scalable stack, distribution runway)
+Ensure "estimatedCost" is formatted cleanly with the ₹ symbol and Indian numbering (e.g., "₹50,000 - ₹1,50,000"). Never use "$".
+
+=== OUTPUT CONSTRAINTS ===
+- Generate EXACTLY 5 startup ideas.
+- Respect the initial budget constraint strictly in Indian Rupees.
+- Return ONLY valid JSON as a list of 5 objects. Do not add markdown code fences, headers, or any text outside the JSON.
+
+Expected JSON format:
+[
+  {{
+    "name": "Distinct Startup Name",
+    "shortDescription": "One-line summary explaining the business clearly",
+    "problem": "Specific, acute pain point experienced by target customers",
+    "solution": "Clear proposed product or workflow solution",
+    "matchPercentage": 88,
+    "matchExplanation": "Personalized 2-3 sentence explanation of why this matches the user's specific skills, interests, experience, and startup goals.",
+    "usp": "Key differentiator or competitive moat",
+    "difficulty": "Low | Moderate | High",
+    "estimatedCost": "Realistic initial launch cost range in Indian Rupees (e.g., '₹50,000 - ₹1,50,000')"
+  }}
+]
+"""
+
+        response = model.invoke(prompt)
+        content = response.content
+
+        if isinstance(content, list):
+            content = "".join(
+                item.get("text", "")
+                if isinstance(item, dict)
+                else str(item)
+                for item in content
+            )
+
+        content = content.strip()
+
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+
+        parsed = json.loads(content.strip())
+
+        ideas = []
+        if isinstance(parsed, list):
+            ideas = parsed
+        elif isinstance(parsed, dict):
+            for key in ["ideas", "startup_ideas", "results"]:
+                if key in parsed and isinstance(parsed[key], list):
+                    ideas = parsed[key]
+                    break
+            if not ideas:
+                ideas = list(parsed.values())[0] if parsed else []
+
+        if not isinstance(ideas, list) or len(ideas) == 0:
+            raise ValueError("Invalid format: Expected a list of ideas.")
+
+        validated_ideas = []
+        for idea in ideas[:5]:
+            try:
+                score = int(idea.get("matchPercentage", 80))
+                score = max(0, min(100, score))
+            except (ValueError, TypeError):
+                score = 80
+            idea["matchPercentage"] = score
+
+            cost_str = str(idea.get("estimatedCost", "₹50,000 - ₹1,50,000"))
+            if "$" in cost_str:
+                cost_str = cost_str.replace("$", "₹")
+            if "₹" not in cost_str and "rs" not in cost_str.lower():
+                cost_str = f"₹{cost_str.strip()}"
+            idea["estimatedCost"] = cost_str
+
+            validated_ideas.append(idea)
+
+        return {"ideas": validated_ideas}
+
+    except Exception as error:
+        error_text = str(error)
+        print("Profile idea generation error:", error_text)
+
+        if "503" in error_text or "UNAVAILABLE" in error_text:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "error_type": "AI_SERVICE_BUSY",
+                    "message": "The AI service is temporarily busy. Please try again in a few moments.",
+                },
+            )
+
+        if "429" in error_text or "RESOURCE_EXHAUSTED" in error_text:
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "error_type": "AI_REQUEST_LIMIT",
+                    "message": "The AI request limit has been reached. Please try again later.",
+                },
+            )
+
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error_type": "AI_GENERATION_ERROR",
+                "message": "Unable to generate personalized startup ideas. Please try again.",
+            },
+        )
 
 
 @app.post("/idea-overview")
@@ -513,6 +680,7 @@ IMPORTANT:
                 "right now."
             )
         }
+
 
 @app.post("/startup-intelligence/pdf")
 def startup_intelligence_pdf(
