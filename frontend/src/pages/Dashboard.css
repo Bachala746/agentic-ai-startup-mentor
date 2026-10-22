@@ -834,3 +834,47 @@
 .save-plan-container {
   margin-bottom: 24px;
 }
+
+/* Startup Intelligence Report Buttons */
+.result-section button {
+  padding: 11px 18px;
+  margin: 8px 10px 0 0;
+  border: 1px solid #6675e8;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #5865e8, #7954d9);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(88, 101, 232, 0.15);
+}
+
+/* Hover effect */
+.result-section button:hover {
+  background: linear-gradient(135deg, #6978ff, #9068f5);
+  border-color: #9ba5ff;
+  transform: translateY(-2px);
+  box-shadow: 0 7px 18px rgba(88, 101, 232, 0.3);
+}
+
+/* Click effect */
+.result-section button:active {
+  transform: translateY(0);
+}
+
+/* Keyboard accessibility */
+.result-section button:focus-visible {
+  outline: 2px solid #a5b4fc;
+  outline-offset: 3px;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .result-section button {
+    width: 100%;
+    margin: 8px 0 0;
+    padding: 12px;
+  }
+}

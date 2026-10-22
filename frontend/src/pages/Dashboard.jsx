@@ -879,7 +879,7 @@ export default function Dashboard() {
 
             {/* ================= COMPETITORS / ALTERNATIVES ================= */}
 
-            <div className="result-section">
+            <div className="result-section intelligence-report-section">
               <h3>🏢 Competitors / Alternatives</h3>
 
               <div className="analysis-item">
