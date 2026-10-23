@@ -16,10 +16,12 @@ export default function ProfileIdeaGeneration() {
 
   // 1. Skills
   const [selectedSkills, setSelectedSkills] = useState(["Full-Stack Web Dev", "AI & LLMs"]);
+  const [customSkills, setCustomSkills] = useState([]);
   const [customSkill, setCustomSkill] = useState("");
 
   // 2. Interests
   const [selectedInterests, setSelectedInterests] = useState(["B2B Productivity", "Creator Economy"]);
+  const [customInterests, setCustomInterests] = useState([]);
   const [customInterest, setCustomInterest] = useState("");
 
   // 3. Experience
@@ -31,6 +33,7 @@ export default function ProfileIdeaGeneration() {
 
   // 5. Domain Knowledge
   const [selectedDomains, setSelectedDomains] = useState(["Software & SaaS", "E-Commerce"]);
+  const [customDomains, setCustomDomains] = useState([]);
   const [customDomain, setCustomDomain] = useState("");
 
   // 6. Startup Goals
@@ -125,19 +128,50 @@ export default function ProfileIdeaGeneration() {
   ];
 
   const toggleSelection = (item, list, setList) => {
-    if (list.includes(item)) {
-      setList(list.filter((i) => i !== item));
-    } else {
-      setList([...list, item]);
-    }
+    setList((previous) =>
+      previous.includes(item)
+        ? previous.filter((i) => i !== item)
+        : [...previous, item]
+    );
   };
 
-  const addCustomItem = (value, list, setList, clearInput) => {
+  // Add custom item with duplicate prevention and automatic selection
+  const addCustomItem = (
+    value,
+    predefinedList,
+    customList,
+    setCustomList,
+    selectedList,
+    setSelectedList,
+    clearInput
+  ) => {
     const trimmed = value.trim();
-    if (trimmed && !list.includes(trimmed)) {
-      setList([...list, trimmed]);
-      clearInput("");
+
+    if (!trimmed) return;
+
+    const alreadyExists =
+      predefinedList.some((item) => item.toLowerCase() === trimmed.toLowerCase()) ||
+      customList.some((item) => item.toLowerCase() === trimmed.toLowerCase()) ||
+      selectedList.some((item) => item.toLowerCase() === trimmed.toLowerCase());
+
+    if (alreadyExists) {
+      alert("This item has already been added.");
+      return;
     }
+
+    setCustomList((previous) => [...previous, trimmed]);
+    setSelectedList((previous) => [...previous, trimmed]);
+    clearInput("");
+  };
+
+  // Remove a custom item from both the custom items list and active selection
+  const removeCustomItem = (item, setCustomList, setSelectedList) => {
+    setCustomList((previous) =>
+      previous.filter((i) => i.toLowerCase() !== item.toLowerCase())
+    );
+    setSelectedList((previous) =>
+      previous.filter((i) => i.toLowerCase() !== item.toLowerCase())
+    );
   };
 
   const parseList = (val) => {
@@ -385,6 +419,21 @@ export default function ProfileIdeaGeneration() {
                         {skill} {selectedSkills.includes(skill) ? "✓" : "+"}
                       </button>
                     ))}
+                    {customSkills.map((skill) => (
+                      <button
+                        type="button"
+                        key={skill}
+                        className={`profile-chip ${
+                          selectedSkills.includes(skill) ? "chip-active" : ""
+                        }`}
+                        onClick={() =>
+                          removeCustomItem(skill, setCustomSkills, setSelectedSkills)
+                        }
+                        title="Click to remove"
+                      >
+                        {skill} ✕
+                      </button>
+                    ))}
                   </div>
 
                   <div className="custom-input-group">
@@ -396,7 +445,15 @@ export default function ProfileIdeaGeneration() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
-                          addCustomItem(customSkill, selectedSkills, setSelectedSkills, setCustomSkill);
+                          addCustomItem(
+                            customSkill,
+                            popularSkills,
+                            customSkills,
+                            setCustomSkills,
+                            selectedSkills,
+                            setSelectedSkills,
+                            setCustomSkill
+                          );
                         }
                       }}
                     />
@@ -404,7 +461,15 @@ export default function ProfileIdeaGeneration() {
                       type="button"
                       className="add-chip-btn"
                       onClick={() =>
-                        addCustomItem(customSkill, selectedSkills, setSelectedSkills, setCustomSkill)
+                        addCustomItem(
+                          customSkill,
+                          popularSkills,
+                          customSkills,
+                          setCustomSkills,
+                          selectedSkills,
+                          setSelectedSkills,
+                          setCustomSkill
+                        )
                       }
                     >
                       Add
@@ -437,6 +502,21 @@ export default function ProfileIdeaGeneration() {
                         {interest} {selectedInterests.includes(interest) ? "✓" : "+"}
                       </button>
                     ))}
+                    {customInterests.map((interest) => (
+                      <button
+                        type="button"
+                        key={interest}
+                        className={`profile-chip ${
+                          selectedInterests.includes(interest) ? "chip-active" : ""
+                        }`}
+                        onClick={() =>
+                          removeCustomItem(interest, setCustomInterests, setSelectedInterests)
+                        }
+                        title="Click to remove"
+                      >
+                        {interest} ✕
+                      </button>
+                    ))}
                   </div>
 
                   <div className="custom-input-group">
@@ -450,6 +530,9 @@ export default function ProfileIdeaGeneration() {
                           e.preventDefault();
                           addCustomItem(
                             customInterest,
+                            popularInterests,
+                            customInterests,
+                            setCustomInterests,
                             selectedInterests,
                             setSelectedInterests,
                             setCustomInterest
@@ -463,6 +546,9 @@ export default function ProfileIdeaGeneration() {
                       onClick={() =>
                         addCustomItem(
                           customInterest,
+                          popularInterests,
+                          customInterests,
+                          setCustomInterests,
                           selectedInterests,
                           setSelectedInterests,
                           setCustomInterest
@@ -499,6 +585,21 @@ export default function ProfileIdeaGeneration() {
                         {domain} {selectedDomains.includes(domain) ? "✓" : "+"}
                       </button>
                     ))}
+                    {customDomains.map((domain) => (
+                      <button
+                        type="button"
+                        key={domain}
+                        className={`profile-chip ${
+                          selectedDomains.includes(domain) ? "chip-active" : ""
+                        }`}
+                        onClick={() =>
+                          removeCustomItem(domain, setCustomDomains, setSelectedDomains)
+                        }
+                        title="Click to remove"
+                      >
+                        {domain} ✕
+                      </button>
+                    ))}
                   </div>
 
                   <div className="custom-input-group">
@@ -512,6 +613,9 @@ export default function ProfileIdeaGeneration() {
                           e.preventDefault();
                           addCustomItem(
                             customDomain,
+                            domainOptions,
+                            customDomains,
+                            setCustomDomains,
                             selectedDomains,
                             setSelectedDomains,
                             setCustomDomain
@@ -525,6 +629,9 @@ export default function ProfileIdeaGeneration() {
                       onClick={() =>
                         addCustomItem(
                           customDomain,
+                          domainOptions,
+                          customDomains,
+                          setCustomDomains,
                           selectedDomains,
                           setSelectedDomains,
                           setCustomDomain

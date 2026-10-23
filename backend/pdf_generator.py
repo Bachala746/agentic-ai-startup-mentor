@@ -7,7 +7,6 @@ from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
     Spacer,
-    KeepTogether,
     HRFlowable,
     Table,
     TableStyle,
@@ -29,13 +28,13 @@ from reportlab.pdfbase.pdfmetrics import registerFontFamily
 
 
 # ============================================================================
-# UNICODE FONT REGISTRATION (INDIAN RUPEE â‚¹ SYMBOL & SPECIAL CHARS)
+# UNICODE FONT REGISTRATION (INDIAN RUPEE ₹ SYMBOL & SPECIAL CHARS)
 # ============================================================================
 
 def setup_unicode_fonts():
     """
     Safely locates and registers a local TrueType font supporting Unicode
-    characters, specifically including the Indian Rupee symbol (â‚¹).
+    characters, specifically including the Indian Rupee symbol (₹).
     Searches standard Linux, Windows, macOS, and virtualenv font directories.
     Falls back gracefully to Helvetica if no compatible TTF font is accessible.
     """
@@ -179,7 +178,7 @@ class NumberedCanvas(canvas.Canvas):
 
         self.setFont(FONT_REGULAR, 7.5)
         self.setFillColor(HexColor("#64748B"))
-        self.drawString(36, 18, f"Agentic AI Startup Mentor â€¢ Prepared {self.generated_date} â€¢ Verified & Dynamic Intelligence")
+        self.drawString(36, 18, f"Agentic AI Startup Mentor • Prepared {self.generated_date} • Verified & Dynamic Intelligence")
         self.drawRightString(559, 18, f"Page {self._pageNumber} of {page_count}")
 
         self.restoreState()
@@ -264,7 +263,7 @@ def sanitize_sisfs_and_msme_recommendation(text: str) -> str:
 
     # 2. Status / ongoing label attached directly to SISFS
     t = re.sub(
-        r'(?i)\b(sisfs|startup india seed fund(?:\s+scheme)?)\s*(?:\((?:ongoing|open)\)|[-:â€“]\s*(?:ongoing|open)|\s+is\s+(?:ongoing|open))\b',
+        r'(?i)\b(sisfs|startup india seed fund(?:\s+scheme)?)\s*(?:\((?:ongoing|open)\)|[-:–]\s*(?:ongoing|open)|\s+is\s+(?:ongoing|open))\b',
         r'\1 (Closed on 31 May 2026; monitor official portal for successor calls or explore active alternatives)',
         t
     )
@@ -276,13 +275,13 @@ def sanitize_sisfs_and_msme_recommendation(text: str) -> str:
 
     # 3. Status / ongoing label attached directly to MSME
     t = re.sub(
-        r'(?i)\b(msme(?:\s+innovative(?:\s+scheme)?)?)\s*(?:\((?:ongoing|open)\)|[-:â€“]\s*(?:ongoing|open)|\s+is\s+(?:ongoing|open))\b',
-        r'\1 (Status Unverified â€” Check Official Portal)',
+        r'(?i)\b(msme(?:\s+innovative(?:\s+scheme)?)?)\s*(?:\((?:ongoing|open)\)|[-:–]\s*(?:ongoing|open)|\s+is\s+(?:ongoing|open))\b',
+        r'\1 (Status Unverified — Check Official Portal)',
         t
     )
     t = re.sub(
         r'(?i)\b(?:ongoing|open)\s+(msme(?:\s+innovative(?:\s+scheme)?)?)\b',
-        r'\1 (Status Unverified â€” Check Official Portal)',
+        r'\1 (Status Unverified — Check Official Portal)',
         t
     )
 
@@ -297,11 +296,6 @@ def get_opportunity_status(
 ) -> tuple[str, str, str, str, str, str]:
     """
     Returns (status_label, badge_bg, badge_fg, border_color, card_bg, normalized_deadline).
-    Guarantees:
-    - Never marks unverified opportunities as open based only on names, dates, or keywords.
-    - SISFS is strictly labeled CLOSED with deadline 31 May 2026.
-    - Marks OPEN only when current, reliable official-source evidence confirms applications are open.
-    - If status cannot be verified, displays 'STATUS: UNVERIFIED'.
     """
     name_lower = str(opp_name or "").lower()
     dl_lower = str(deadline_str or "").lower()
@@ -355,351 +349,190 @@ def get_opportunity_status(
             deadline_str or "Applications open (Officially verified)",
         )
 
-    # 4. Strict Fallback: Display UNVERIFIED (Never mark OPEN without reliable official confirmation)
+    # 4. Strict Fallback: Display UNVERIFIED
     return (
         "STATUS: UNVERIFIED",
         "#FEF3C7",
         "#92400E",
         "#FCD34D",
         "#FFFDF7",
-        deadline_str if (deadline_str and deadline_str.strip() and dl_lower not in ["none", "null", "n/a", "undefined", "not publicly specified"]) else "Status unverified â€” Check official portal for active call announcements",
+        deadline_str if (deadline_str and deadline_str.strip() and dl_lower not in ["none", "null", "n/a", "undefined", "not publicly specified"]) else "Status unverified — Check official portal for active call announcements",
     )
 
 
 # ============================================================================
-# COMPACT DYNAMIC ORGANIZATIONAL HIERARCHY BUILDER (ALL DEPTHS)
+# COMPACT DYNAMIC ORGANIZATIONAL HIERARCHY BUILDER
 # ============================================================================
 
 def build_multi_level_hierarchy_diagram(team_hierarchy: list, team_structure: list) -> Drawing:
-    """
-    Constructs a clean, professional, compact organizational hierarchy chart.
-    Places the CEO at the top, department roles beneath, and connects roles using
-    clear reporting bus lines and downward-pointing arrows.
-    Dynamically renders EVERY reporting level (including 5+ levels) without missing
-    roles, overlapping cards, or crossed reporting lines.
-    """
-    raw_nodes = []
-
-    if team_hierarchy and isinstance(team_hierarchy, list):
-        for item in team_hierarchy:
-            if isinstance(item, dict) and item.get("role"):
-                raw_nodes.append({
-                    "role": item.get("role", "").strip(),
-                    "reports_to": item.get("reports_to", "").strip(),
-                    "department": item.get("department", "").strip(),
-                    "priority": item.get("priority", "Essential").strip(),
-                })
-
-    struct_map = {}
-    if team_structure and isinstance(team_structure, list):
-        for s in team_structure:
-            if isinstance(s, dict) and s.get("role"):
-                r_name = s.get("role", "").strip().lower()
-                struct_map[r_name] = s
-
-    if not raw_nodes and team_structure and isinstance(team_structure, list):
-        for s in team_structure:
-            if isinstance(s, dict) and s.get("role"):
-                raw_nodes.append({
-                    "role": s.get("role", "").strip(),
-                    "reports_to": s.get("reports_to", "CEO").strip(),
-                    "department": s.get("department", "").strip(),
-                    "priority": s.get("priority", "Essential").strip(),
-                })
-
-    if not raw_nodes:
-        raw_nodes = [{
-            "role": "CEO / Founder",
-            "reports_to": "",
-            "department": "Executive Leadership",
-            "priority": "Essential",
-        }]
-
-    # Merge metadata
-    for n in raw_nodes:
-        key = n["role"].lower()
-        if key in struct_map:
-            meta = struct_map[key]
-            if not n.get("department"):
-                n["department"] = meta.get("department", "").strip()
-            if not n.get("priority"):
-                n["priority"] = meta.get("priority", "Essential").strip()
-
-    # Normalize Root (CEO / Founder)
-    for n in raw_nodes:
-        r_lower = n["role"].lower()
-        if "ceo" in r_lower or "founder" in r_lower:
-            rep_lower = n.get("reports_to", "").lower()
-            if rep_lower in ["founder/ceo", "ceo", "founder", "founder / ceo", r_lower, "none", "null", ""]:
-                n["reports_to"] = ""
-        elif n.get("reports_to", "").strip().lower() == r_lower:
-            n["reports_to"] = ""
-
-    node_by_role = {}
-    children_by_role = {}
-    for n in raw_nodes:
-        r_name = n["role"]
-        node_by_role[r_name] = n
-        children_by_role.setdefault(r_name, [])
-
-    for n in raw_nodes:
-        parent = n.get("reports_to", "").strip()
-        if parent and parent.lower() != n["role"].lower():
-            matched_parent = None
-            for p_cand in node_by_role:
-                if p_cand.lower() == parent.lower():
-                    matched_parent = p_cand
-                    break
-            if matched_parent:
-                children_by_role.setdefault(matched_parent, []).append(n["role"])
-
-    root_role = None
-    for n in raw_nodes:
-        if not n.get("reports_to") or n.get("reports_to").lower() in ["none", "null", ""]:
-            root_role = n["role"]
-            break
-    if not root_role:
-        for n in raw_nodes:
-            if "ceo" in n["role"].lower() or "founder" in n["role"].lower():
-                root_role = n["role"]
-                n["reports_to"] = ""
-                break
-    if not root_role:
-        root_role = raw_nodes[0]["role"]
-        raw_nodes[0]["reports_to"] = ""
-
-    # Group nodes by levels using BFS to support arbitrary hierarchy depth
-    level_nodes = {}
-    node_depth = {}
-    visited = set()
-    queue = [(root_role, 0)]
-    visited.add(root_role.lower())
-
-    while queue:
-        curr, depth = queue.pop(0)
-        curr_node = node_by_role.get(curr)
-        if curr_node:
-            level_nodes.setdefault(depth, []).append(curr_node)
-            node_depth[curr] = depth
-            for ch in children_by_role.get(curr, []):
-                if ch.lower() not in visited:
-                    visited.add(ch.lower())
-                    queue.append((ch, depth + 1))
-
-    # Catch any orphan nodes and assign to Level 1
-    for r_name, n in node_by_role.items():
-        if r_name.lower() not in visited:
-            level_nodes.setdefault(1, []).append(n)
-            node_depth[r_name] = 1
-            visited.add(r_name.lower())
-
-    max_depth = max(level_nodes.keys()) if level_nodes else 0
-    diagram_width = 515
-    ceo_node = level_nodes.get(0, [raw_nodes[0]])[0]
-
-    level_1_nodes = level_nodes.get(1, [])
-    level_2_nodes = level_nodes.get(2, [])
-
-    has_multi_levels = max_depth >= 2 and len(level_2_nodes) > 0
-    two_rows_flat = (not has_multi_levels) and (len(level_1_nodes) > 4)
-
-    card_h = 32 if max_depth >= 4 else 34
-    level_gap = 18 if max_depth >= 4 else 22
-
-    num_levels = max_depth + 1
-    if num_levels == 1:
-        diagram_height = 65
-    elif two_rows_flat:
-        diagram_height = 175  # CEO + 2 rows of leads
-    else:
-        diagram_height = 12 + num_levels * card_h + (num_levels - 1) * level_gap + 10
-
-    d = Drawing(diagram_width, diagram_height)
-
-    def draw_role_card(x, y, w, h, role_name, dept_name, priority, is_root=False):
-        if is_root:
-            bg_col = HexColor("#1E293B")
-            border_col = HexColor("#3B82F6")
-            title_col = HexColor("#FFFFFF")
-            dept_col = HexColor("#93C5FD")
-            badge_bg = HexColor("#334155")
-            badge_fg = HexColor("#93C5FD")
-            badge_text = "LEADER"
-        else:
-            is_essential = "essential" in str(priority or "").lower()
-            bg_col = HexColor("#FFFFFF")
-            border_col = HexColor("#2563EB") if is_essential else HexColor("#94A3B8")
-            title_col = HexColor("#0F172A")
-            dept_col = HexColor("#475569")
-            if is_essential:
-                badge_bg = HexColor("#DCFCE7")
-                badge_fg = HexColor("#166534")
-                badge_text = "Essential"
-            else:
-                badge_bg = HexColor("#FEF3C7")
-                badge_fg = HexColor("#92400E")
-                badge_text = "Later"
-
-        # Rounded card background
-        d.add(Rect(x, y, w, h, rx=4, ry=4, fillColor=bg_col, strokeColor=border_col, strokeWidth=1.2 if is_root else 1.0))
-
-        # Dynamic typography scaling to prevent text clipping
-        if w < 90:
-            f_size = 6.6
-            max_c = 15
-            f_dept = 5.8
-        elif w < 120:
-            f_size = 7.2
-            max_c = 20
-            f_dept = 6.2
-        elif w < 145:
-            f_size = 7.8
-            max_c = 26
-            f_dept = 6.6
-        else:
-            f_size = 8.2
-            max_c = 32
-            f_dept = 7.0
-
-        title_str = truncate_text(role_name, max_c)
-        d.add(String(x + w / 2, y + h * 0.62, title_str, fontName=FONT_BOLD, fontSize=f_size, fillColor=title_col, textAnchor="middle"))
-
-        # Department (line 2)
-        dept_str = truncate_text(dept_name, max_c + 2) if dept_name else ("Executive" if is_root else "General")
-        d.add(String(x + w / 2, y + h * 0.38, dept_str, fontName=FONT_REGULAR, fontSize=f_dept, fillColor=dept_col, textAnchor="middle"))
-
-        # Badge pill (line 3)
-        badge_w = min(44, w * 0.44)
-        badge_h = 8.5
-        badge_x = x + (w - badge_w) / 2
-        badge_y = y + 2.5
-        d.add(Rect(badge_x, badge_y, badge_w, badge_h, rx=2, ry=2, fillColor=badge_bg, strokeColor=None))
-        d.add(String(x + w / 2, badge_y + 2.0, badge_text, fontName=FONT_BOLD, fontSize=5.2, fillColor=badge_fg, textAnchor="middle"))
-
-    def draw_down_arrow(x, y_tip):
-        d.add(Polygon(
-            [x - 3.5, y_tip + 5, x + 3.5, y_tip + 5, x, y_tip],
-            fillColor=HexColor("#64748B"),
-            strokeColor=HexColor("#64748B"),
-        ))
-
-    # 1. Place CEO at the Top Center
-    ceo_w = 170
-    ceo_h = card_h
-    ceo_x = (diagram_width - ceo_w) / 2
-    ceo_y = diagram_height - 10 - ceo_h
-    ceo_mid_x = ceo_x + ceo_w / 2
-    draw_role_card(ceo_x, ceo_y, ceo_w, ceo_h, ceo_node["role"], ceo_node.get("department", "Executive Leadership"), "Essential", is_root=True)
-
-    if num_levels == 1:
-        return d
-
-    # 2. Flat Large Team Special Case (Level 1 with > 4 direct reports wrapped in 2 rows)
-    if two_rows_flat:
-        level_1_nodes = level_nodes.get(1, [])
-        num_subs = len(level_1_nodes)
-        row1_nodes = level_1_nodes[: (num_subs + 1) // 2]
-        row2_nodes = level_1_nodes[(num_subs + 1) // 2 :]
-
-        row1_y = 68
-        row2_y = 12
-
-        bus1_y = (ceo_y + row1_y + card_h) / 2
-        d.add(Line(ceo_mid_x, ceo_y, ceo_mid_x, bus1_y, strokeColor=HexColor("#64748B"), strokeWidth=1.2))
-
-        def draw_flat_row(nodes, y_pos, bus_level):
-            cnt = len(nodes)
-            gap = 10
-            total_gaps = (cnt - 1) * gap
-            avail_w = min(495, diagram_width - 20)
-            lw = min(145, (avail_w - total_gaps) / cnt)
-            rw = cnt * lw + total_gaps
-            sx = (diagram_width - rw) / 2
-
-            centers = []
-            for i, node in enumerate(nodes):
-                bx = sx + i * (lw + gap)
-                draw_role_card(bx, y_pos, lw, card_h, node["role"], node.get("department", "General"), node.get("priority", "Essential"), is_root=False)
-                cx = bx + lw / 2
-                centers.append(cx)
-
-            if len(centers) > 1:
-                d.add(Line(min(centers), bus_level, max(centers), bus_level, strokeColor=HexColor("#64748B"), strokeWidth=1.2))
-
-            for cx in centers:
-                d.add(Line(cx, bus_level, cx, y_pos + card_h, strokeColor=HexColor("#64748B"), strokeWidth=1.2))
-                draw_down_arrow(cx, y_pos + card_h)
-
-        draw_flat_row(row1_nodes, row1_y, bus1_y)
-
-        bus2_y = (row1_y + row2_y + card_h) / 2
-        d.add(Line(ceo_mid_x, bus1_y, ceo_mid_x, bus2_y, strokeColor=HexColor("#64748B"), strokeWidth=1.2))
-        draw_flat_row(row2_nodes, row2_y, bus2_y)
-        return d
-
-    # 3. Generalized Dynamic Multi-Level Renderer (Supports 1, 2, 3, 4, 5+ Levels)
-    # Stores {role_lower: (x_pos, y_pos, width, height, center_x)} for all rendered nodes
-    rendered_coords = {
-        ceo_node["role"].lower(): (ceo_x, ceo_y, ceo_w, ceo_h, ceo_mid_x)
-    }
-
-    for depth in range(1, num_levels):
-        y_curr = ceo_y - depth * (card_h + level_gap)
-        nodes_curr = level_nodes.get(depth, [])
-        if not nodes_curr:
+    """Draws a startup-specific hierarchy diagram with centered parent/child branches."""
+    nodes = []
+    source = team_hierarchy if isinstance(team_hierarchy, list) and team_hierarchy else team_structure
+    for item in source if isinstance(source, list) else []:
+        if not isinstance(item, dict) or not str(item.get("role", "")).strip():
             continue
+        role = str(item.get("role", "")).strip()
+        reports_to = str(item.get("reports_to") or "").strip()
+        nodes.append({
+            "role": role,
+            "reports_to": reports_to,
+            "department": str(item.get("department") or "").strip(),
+            "priority": str(item.get("priority") or "Essential").strip(),
+        })
 
-        # Sort nodes at this level by their parent's horizontal position to prevent crossed lines
-        def get_parent_sort_key(node):
-            parent_role = node.get("reports_to", "").strip().lower()
-            if parent_role in rendered_coords:
-                return rendered_coords[parent_role][4]
-            return diagram_width / 2
+    metadata = {
+        str(item.get("role", "")).strip().lower(): item
+        for item in (team_structure if isinstance(team_structure, list) else [])
+        if isinstance(item, dict) and str(item.get("role", "")).strip()
+    }
+    for node in nodes:
+        meta = metadata.get(node["role"].lower(), {})
+        node["department"] = node["department"] or str(meta.get("department") or "General")
+        node["priority"] = node["priority"] or str(meta.get("priority") or "Essential")
+        if not node["reports_to"] or node["reports_to"].lower() in {"none", "null", "n/a"}:
+            node["reports_to"] = ""
 
-        nodes_curr = sorted(nodes_curr, key=get_parent_sort_key)
+    if not nodes:
+        nodes = [{"role": "CEO / Founder", "reports_to": "", "department": "Executive Leadership", "priority": "Essential"}]
 
-        num_curr = len(nodes_curr)
-        gap_curr = 10 if num_curr <= 4 else 8
-        total_gaps = (num_curr - 1) * gap_curr
-        avail_w = min(495, diagram_width - 20)
-        w_curr = min(150, max(68, (avail_w - total_gaps) / num_curr))
-        total_row_w = num_curr * w_curr + total_gaps
-        start_x = (diagram_width - total_row_w) / 2
+    by_lower = {n["role"].lower(): n for n in nodes}
+    root = next((n for n in nodes if "ceo" in n["role"].lower() or "founder" in n["role"].lower()), nodes[0])
+    root["reports_to"] = ""
+    root_name = root["role"]
+    aliases = {"ceo", "founder", "founder/ceo", "founder / ceo", "chief executive officer", "chief executive officer (ceo)"}
+    for node in nodes:
+        if node is root:
+            continue
+        parent = node["reports_to"].strip()
+        if parent.lower() in aliases:
+            node["reports_to"] = root_name
+        elif parent.lower() not in by_lower:
+            node["reports_to"] = root_name
+        else:
+            node["reports_to"] = by_lower[parent.lower()]["role"]
 
-        # Draw cards for current level
-        parent_to_child_centers = {}
-        for i, node in enumerate(nodes_curr):
-            x_pos = start_x + i * (w_curr + gap_curr)
-            mid_x = x_pos + w_curr / 2
-            draw_role_card(x_pos, y_curr, w_curr, card_h, node["role"], node.get("department", "General"), node.get("priority", "Essential"), is_root=False)
-            rendered_coords[node["role"].lower()] = (x_pos, y_curr, w_curr, card_h, mid_x)
+    children = {n["role"]: [] for n in nodes}
+    for node in nodes:
+        parent = node["reports_to"]
+        if parent and parent in children and node["role"] != parent:
+            children[parent].append(node["role"])
 
-            p_key = node.get("reports_to", "").strip().lower()
-            parent_to_child_centers.setdefault(p_key, []).append(mid_x)
+    reachable = set()
+    def mark_reachable(role):
+        if role in reachable:
+            return
+        reachable.add(role)
+        for child in children.get(role, []):
+            mark_reachable(child)
+    mark_reachable(root_name)
+    for node in nodes:
+        if node["role"] not in reachable and node is not root:
+            old_parent = node["reports_to"]
+            if old_parent in children and node["role"] in children[old_parent]:
+                children[old_parent].remove(node["role"])
+            node["reports_to"] = root_name
+            children[root_name].append(node["role"])
+            mark_reachable(node["role"])
 
-        # Draw orthogonal reporting connectors and arrows from each parent to its children
-        bus_y = y_curr + card_h + level_gap / 2
-        for p_key, child_centers in parent_to_child_centers.items():
-            if p_key in rendered_coords:
-                p_mid_x = rendered_coords[p_key][4]
-                p_bottom_y = rendered_coords[p_key][1]
-            else:
-                p_mid_x = ceo_mid_x
-                p_bottom_y = ceo_y
+    levels = {}
+    depths = {}
+    queue = [(root_name, 0)]
+    while queue:
+        role, depth = queue.pop(0)
+        if role in depths:
+            continue
+        depths[role] = depth
+        levels.setdefault(depth, []).append(role)
+        for child in children.get(role, []):
+            queue.append((child, depth + 1))
 
-            # Vertical drop from parent to bus
-            d.add(Line(p_mid_x, p_bottom_y, p_mid_x, bus_y, strokeColor=HexColor("#64748B"), strokeWidth=1.2))
+    max_depth = max(levels) if levels else 0
+    diagram_width = 515
+    card_h = 32
+    level_gap = 18
+    top_pad, bottom_pad = 6, 8
+    diagram_height = top_pad + card_h + max_depth * (card_h + level_gap) + bottom_pad
+    d = Drawing(diagram_width, diagram_height)
+    card_positions = {}
 
-            # Horizontal bus spanning parent and children
-            bus_min_x = min([p_mid_x] + child_centers)
-            bus_max_x = max([p_mid_x] + child_centers)
-            if bus_max_x > bus_min_x:
-                d.add(Line(bus_min_x, bus_y, bus_max_x, bus_y, strokeColor=HexColor("#64748B"), strokeWidth=1.2))
+    def draw_card(role, x, y, w, node):
+        is_root = role == root_name
+        priority = str(node.get("priority") or "Essential")
+        essential = "later" not in priority.lower()
+        bg = HexColor("#17365D") if is_root else HexColor("#FFFFFF")
+        border = HexColor("#3B82F6") if is_root else (HexColor("#2563EB") if essential else HexColor("#D97706"))
+        title = HexColor("#FFFFFF") if is_root else HexColor("#0F172A")
+        sub = HexColor("#DBEAFE") if is_root else HexColor("#475569")
+        d.add(Rect(x, y, w, card_h, rx=4, ry=4, fillColor=bg, strokeColor=border, strokeWidth=1.1))
+        max_chars = max(10, int(w / 5.2))
+        role_label = truncate_text(role, max_chars)
+        dept_label = truncate_text(node.get("department") or "General", max(10, int(w / 4.6)))
+        title_size = 6.8 if w < 92 else 7.4
+        d.add(String(x + w / 2, y + 21, role_label, fontName=FONT_BOLD, fontSize=title_size, fillColor=title, textAnchor="middle"))
+        d.add(String(x + w / 2, y + 12, dept_label, fontName=FONT_REGULAR, fontSize=5.8, fillColor=sub, textAnchor="middle"))
+        badge = "LEADER" if is_root else ("MVP" if essential else "LATER")
+        badge_bg = HexColor("#334155") if is_root else (HexColor("#DCFCE7") if essential else HexColor("#FEF3C7"))
+        badge_fg = HexColor("#FFFFFF") if is_root else (HexColor("#166534") if essential else HexColor("#92400E"))
+        bw = min(42, w - 8)
+        d.add(Rect(x + (w - bw) / 2, y + 2, bw, 7.5, rx=2, ry=2, fillColor=badge_bg, strokeColor=None))
+        d.add(String(x + w / 2, y + 3.5, badge, fontName=FONT_BOLD, fontSize=4.8, fillColor=badge_fg, textAnchor="middle"))
+        card_positions[role] = (x, y, w, card_h, x + w / 2)
 
-            # Vertical drops from bus to each child with downward arrow
-            for cx in child_centers:
-                d.add(Line(cx, bus_y, cx, y_curr + card_h, strokeColor=HexColor("#64748B"), strokeWidth=1.2))
-                draw_down_arrow(cx, y_curr + card_h)
+    leaves = []
+    def collect_leaves(role):
+        kids = children.get(role, [])
+        if not kids:
+            leaves.append(role)
+            return 1
+        total = 0
+        for child in kids:
+            total += collect_leaves(child)
+        return total
+    collect_leaves(root_name)
+    leaf_count = max(1, len(leaves))
+    margin = 8
+    usable = diagram_width - 2 * margin
+    slot = usable / leaf_count
+    leaf_centers = {role: margin + (i + 0.5) * slot for i, role in enumerate(leaves)}
+    subtree_centers = {}
+    def center_for(role):
+        if role in subtree_centers:
+            return subtree_centers[role]
+        kids = children.get(role, [])
+        if not kids:
+            c = leaf_centers.get(role, diagram_width / 2)
+        else:
+            centers = [center_for(k) for k in kids]
+            c = sum(centers) / len(centers)
+        subtree_centers[role] = c
+        return c
+    center_for(root_name)
+
+    card_w = min(126, max(68, (usable - 10 * (leaf_count - 1)) / leaf_count))
+    for depth in range(max_depth + 1):
+        y = diagram_height - top_pad - card_h - depth * (card_h + level_gap)
+        for role in levels.get(depth, []):
+            node = by_lower.get(role.lower(), {"role": role, "department": "General", "priority": "Essential"})
+            cx = subtree_centers.get(role, diagram_width / 2)
+            actual_w = min(180, usable) if role == root_name else card_w
+            x = max(2, min(diagram_width - actual_w - 2, cx - actual_w / 2))
+            draw_card(role, x, y, actual_w, node)
+
+    for parent, kids in children.items():
+        if parent not in card_positions or not kids:
+            continue
+        px, py, pw, ph, pcx = card_positions[parent]
+        child_positions = [card_positions[k] for k in kids if k in card_positions]
+        if not child_positions:
+            continue
+        bus_y = py - level_gap / 2
+        d.add(Line(pcx, py, pcx, bus_y, strokeColor=HexColor("#64748B"), strokeWidth=1.1))
+        centers = [pos[4] for pos in child_positions]
+        if len(centers) > 1:
+            d.add(Line(min(centers), bus_y, max(centers), bus_y, strokeColor=HexColor("#64748B"), strokeWidth=1.1))
+        for cx, cy, cw, ch, ccx in child_positions:
+            d.add(Line(ccx, bus_y, ccx, cy + ch, strokeColor=HexColor("#64748B"), strokeWidth=1.1))
+            d.add(Polygon([ccx - 3, cy + ch + 4, ccx + 3, cy + ch + 4, ccx, cy + ch], fillColor=HexColor("#64748B"), strokeColor=HexColor("#64748B")))
 
     return d
 
@@ -758,12 +591,9 @@ def generate_startup_intelligence_pdf(
     """
     Generates a professional executive-ready Startup Intelligence Report PDF
     tailored to the specific startup idea, industry, business model, and stage.
-    Covers all 10 core sections, provides verified links, dynamic multi-level
-    hierarchy charts, structured financial analysis, and compliant funding cards.
     """
     report = report or {}
 
-    # Setup running canvas metadata
     st_name = str(report.get("startup_name") or "Startup Venture").strip()
     if st_name.lower() in ["none", "null", "not specified"]:
         st_name = "Target Venture"
@@ -880,15 +710,22 @@ def generate_startup_intelligence_pdf(
             spaceAfter=8,
         )
 
+    # Multi-row table allows ReportLab to split card contents safely across pages
     def make_card(flowables_list, border_hex="#CBD5E1", bg_hex="#F8FAFC") -> Table:
-        card_table = Table([[flowables_list]], colWidths=[content_width])
+        if isinstance(flowables_list, list):
+            data = [[f] for f in flowables_list]
+        else:
+            data = [[flowables_list]]
+        card_table = Table(data, colWidths=[content_width], repeatRows=0)
         card_table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), HexColor(bg_hex)),
             ("BOX", (0, 0), (-1, -1), 0.75, HexColor(border_hex)),
             ("LEFTPADDING", (0, 0), (-1, -1), 9),
             ("RIGHTPADDING", (0, 0), (-1, -1), 9),
-            ("TOPPADDING", (0, 0), (-1, -1), 7),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+            ("TOPPADDING", (0, 0), (-1, -1), 1.5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 1.5),
+            ("TOPPADDING", (0, 0), (-1, 0), 4),
+            ("BOTTOMPADDING", (0, -1), (-1, -1), 4),
         ]))
         return card_table
 
@@ -896,7 +733,7 @@ def generate_startup_intelligence_pdf(
     # COVER / HEADER BLOCK
     # -------------------------------------------------------------------------
     story.append(Paragraph("Startup Intelligence Report", title_style))
-    story.append(Paragraph("AGENTIC AI PERSONALIZED STARTUP MENTOR â€¢ DOMAIN INTELLIGENCE", subtitle_style))
+    story.append(Paragraph("AGENTIC AI PERSONALIZED STARTUP MENTOR • DOMAIN INTELLIGENCE", subtitle_style))
     story.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2563EB"), spaceBefore=0, spaceAfter=8))
 
     startup_name_val = report.get("startup_name")
@@ -999,7 +836,7 @@ def generate_startup_intelligence_pdf(
 
             card_elements = [
                 Paragraph(f"<b>{c_name}</b>", item_title_style),
-                Spacer(1, 2),
+                Spacer(1, 1),
                 Paragraph(f"<b>Product / Service:</b> {p_s}", body_style),
                 Paragraph(f"<b>Target Customers:</b> {target}", body_style),
                 Paragraph(f"<b>Business Model:</b> {model} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Pricing:</b> {pricing}", body_style),
@@ -1015,7 +852,8 @@ def generate_startup_intelligence_pdf(
                 w_text = ", ".join([safe_text(w) for w in weaknesses]) if isinstance(weaknesses, list) else safe_text(weaknesses)
                 card_elements.append(Paragraph(f"<b>Weaknesses / Gaps:</b> {w_text}", body_style))
 
-            story.append(KeepTogether([make_card(card_elements), Spacer(1, 5)]))
+            story.append(make_card(card_elements))
+            story.append(Spacer(1, 4))
 
     # Strategic Differentiation Breakdown
     comparison = report.get("startup_vs_competitors")
@@ -1028,14 +866,14 @@ def generate_startup_intelligence_pdf(
                 if isinstance(point, dict):
                     c_target = safe_text(point.get("competitor") or point.get("name"), "Market Alternative")
                     diff = safe_text(point.get("differentiation") or point.get("comparison"), "")
-                    comp_diff_elements.append(Paragraph(f"â€¢ <b>vs {c_target}:</b> {diff}", bullet_style))
+                    comp_diff_elements.append(Paragraph(f"• <b>vs {c_target}:</b> {diff}", bullet_style))
                 else:
-                    comp_diff_elements.append(Paragraph(f"â€¢ {safe_text(point)}", bullet_style))
+                    comp_diff_elements.append(Paragraph(f"• {safe_text(point)}", bullet_style))
         elif isinstance(comparison, dict):
             for k, v in comparison.items():
-                comp_diff_elements.append(Paragraph(f"â€¢ <b>{safe_text(k)}:</b> {safe_text(v)}", bullet_style))
+                comp_diff_elements.append(Paragraph(f"• <b>{safe_text(k)}:</b> {safe_text(v)}", bullet_style))
         else:
-            comp_diff_elements.append(Paragraph(f"â€¢ {safe_text(comparison)}", bullet_style))
+            comp_diff_elements.append(Paragraph(f"• {safe_text(comparison)}", bullet_style))
 
         story.append(make_card(comp_diff_elements))
 
@@ -1052,7 +890,6 @@ def generate_startup_intelligence_pdf(
     priv_raw = report.get("private_funding_opportunities")
     priv_funding = list(priv_raw) if isinstance(priv_raw, list) else []
 
-    # Backward compatibility fallback
     if not gov_funding and not priv_funding:
         fallback_raw = report.get("funding_opportunities")
         fallback_funding = list(fallback_raw) if isinstance(fallback_raw, list) else []
@@ -1091,13 +928,15 @@ def generate_startup_intelligence_pdf(
         if "msme" in name.lower() and not app_website:
             app_website = "https://innovative.msme.gov.in"
 
+        if "tide" in name.lower():
+            app_website = "https://msh.meity.gov.in/schemes/tide"
+
         source_name = safe_text(opp.get("official_source_name") or opp.get("official_source"), org)
         source_url = opp.get("official_source_url") or opp.get("source_url") or ""
 
         steps = opp.get("application_steps", [])
         docs = opp.get("required_documents", [])
 
-        # Sanitize mentions
         eligibility = sanitize_sisfs_and_msme_recommendation(eligibility)
         who_can_apply = sanitize_sisfs_and_msme_recommendation(who_can_apply)
         usage = sanitize_sisfs_and_msme_recommendation(usage)
@@ -1116,12 +955,12 @@ def generate_startup_intelligence_pdf(
 
         card_elements = [
             Paragraph(f"<b>{name}</b> &nbsp;&nbsp; {status_badge_html}", item_title_style),
-            Spacer(1, 2),
+            Spacer(1, 1),
             Paragraph(f"<b>Implementing Agency / Organization:</b> {org} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Funding Type:</b> {funding_type}", body_style),
             Paragraph(f"<b>Funding Amount:</b> {amount} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Target Stage:</b> {stage}", body_style),
             Paragraph(f"<b>Current Status / Deadline:</b> {deadline_text}", body_style),
-            Spacer(1, 2),
-            HRFlowable(width="100%", thickness=0.5, color=HexColor("#E2E8F0"), spaceBefore=2, spaceAfter=3),
+            Spacer(1, 1),
+            HRFlowable(width="100%", thickness=0.5, color=HexColor("#E2E8F0"), spaceBefore=1, spaceAfter=2),
             Paragraph(f"<b>Eligibility Criteria:</b> {eligibility}", body_style),
             Paragraph(f"<b>Who Can Apply:</b> {who_can_apply}", body_style),
             Paragraph(f"<b>Permitted Fund Usage:</b> {usage}", body_style),
@@ -1135,8 +974,8 @@ def generate_startup_intelligence_pdf(
         else:
             card_elements.append(Paragraph(f"<b>Official Source:</b> {source_name}", body_style))
 
-        card_elements.append(Spacer(1, 2))
-        card_elements.append(HRFlowable(width="100%", thickness=0.5, color=HexColor("#E2E8F0"), spaceBefore=2, spaceAfter=3))
+        card_elements.append(Spacer(1, 1))
+        card_elements.append(HRFlowable(width="100%", thickness=0.5, color=HexColor("#E2E8F0"), spaceBefore=1, spaceAfter=2))
 
         # Application Steps
         card_elements.append(Paragraph("<b>Step-by-Step Application Procedure:</b>", card_label_style))
@@ -1153,16 +992,14 @@ def generate_startup_intelligence_pdf(
         card_elements.append(Paragraph("<b>Required Documents Checklist:</b>", card_label_style))
         if docs and isinstance(docs, list):
             doc_items = ", ".join([safe_text(d) for d in docs])
-            card_elements.append(Paragraph(f"&nbsp;&nbsp;â€¢ {doc_items}", bullet_style))
+            card_elements.append(Paragraph(f"&nbsp;&nbsp;• {doc_items}", bullet_style))
         elif isinstance(docs, str) and docs.strip():
-            card_elements.append(Paragraph(f"&nbsp;&nbsp;â€¢ {safe_text(docs)}", bullet_style))
+            card_elements.append(Paragraph(f"&nbsp;&nbsp;• {safe_text(docs)}", bullet_style))
         else:
-            card_elements.append(Paragraph("&nbsp;&nbsp;â€¢ As specified on the official application portal.", bullet_style))
+            card_elements.append(Paragraph("&nbsp;&nbsp;• As specified on the official application portal.", bullet_style))
 
-        card_flowable = make_card(card_elements, border_hex=border_hex, bg_hex=card_bg_hex)
-        return KeepTogether([card_flowable, Spacer(1, 6)])
+        return make_card(card_elements, border_hex=border_hex, bg_hex=card_bg_hex)
 
-    # 4A. Government Funding Schemes
     story.append(Paragraph("A. Government Funding Schemes", h2_style))
     if not gov_funding:
         story.append(Paragraph("<i>No government funding schemes recorded for this sector.</i>", body_style))
@@ -1170,10 +1007,10 @@ def generate_startup_intelligence_pdf(
         for opp in gov_funding:
             if isinstance(opp, dict):
                 story.append(render_funding_card(opp, is_government=True))
+                story.append(Spacer(1, 4))
 
-    story.append(Spacer(1, 4))
+    story.append(Spacer(1, 2))
 
-    # 4B. Private Funding Opportunities
     story.append(Paragraph("B. Private Funding Opportunities & Accelerators", h2_style))
     if not priv_funding:
         story.append(Paragraph("<i>No private funding opportunities recorded for this sector.</i>", body_style))
@@ -1181,6 +1018,7 @@ def generate_startup_intelligence_pdf(
         for opp in priv_funding:
             if isinstance(opp, dict):
                 story.append(render_funding_card(opp, is_government=False))
+                story.append(Spacer(1, 4))
 
     story.append(section_divider())
 
@@ -1194,8 +1032,31 @@ def generate_startup_intelligence_pdf(
     if not team_list:
         story.append(Paragraph("<i>No team structure data available.</i>", body_style))
     else:
-        essential_roles = [r for r in team_list if isinstance(r, dict) and "later" not in str(r.get("priority", "")).lower()]
-        later_roles = [r for r in team_list if isinstance(r, dict) and "later" in str(r.get("priority", "")).lower()]
+        # Dynamic Organizational Hierarchy Diagram at top of Section 5
+        hierarchy_raw = report.get("team_hierarchy")
+        hierarchy_nodes = list(hierarchy_raw) if isinstance(hierarchy_raw, list) else []
+
+        story.append(Paragraph("Organizational Reporting Hierarchy", h2_style))
+        story.append(Paragraph("<i>Visual reporting structure connecting executive leadership, functional department leads, and domain specialists:</i>", body_style))
+        story.append(Spacer(1, 3))
+
+        hierarchy_diagram = build_multi_level_hierarchy_diagram(
+            hierarchy_nodes,
+            team_list,
+        )
+        story.append(hierarchy_diagram)
+        story.append(Spacer(1, 5))
+
+        # Lean Team Strategy Callout
+        lean_advice = report.get("lean_team_advice") or report.get("team_recommendation")
+        if lean_advice:
+            story.append(Paragraph("Lean Team Execution Strategy", h2_style))
+            story.append(make_card([Paragraph(safe_text(lean_advice), body_style)]))
+            story.append(Spacer(1, 4))
+
+        # Categorized Detailed Role Cards (splittable across pages)
+        essential_roles = [r for r in team_list if isinstance(r, dict) and "later" not in str(r.get("priority", "")).lower() and "growth" not in str(r.get("priority", "")).lower()]
+        later_roles = [r for r in team_list if isinstance(r, dict) and ("later" in str(r.get("priority", "")).lower() or "growth" in str(r.get("priority", "")).lower())]
 
         def render_role_cards(role_group, group_label):
             if not role_group:
@@ -1210,7 +1071,12 @@ def generate_startup_intelligence_pdf(
                     or "founder" in str(role_item.get("role", "")).lower()
                     else safe_text(role_item.get("reports_to"), "CEO")
                 )
-                priority = safe_text(role_item.get("priority"), "Essential")
+                priority_val = str(role_item.get("priority") or "Essential").strip()
+                if "later" in priority_val.lower() or "growth" in priority_val.lower():
+                    badge_html = "<font color='#92400E'><b>[Later — Scale & Expansion Stage]</b></font>"
+                else:
+                    badge_html = "<font color='#166534'><b>[Essential — MVP Launch Stage]</b></font>"
+
                 exp_level = safe_text(role_item.get("experience_level"), "Not specified")
                 why_needed = safe_text(role_item.get("why_needed"))
                 responsibilities = safe_text(role_item.get("responsibilities"))
@@ -1228,44 +1094,23 @@ def generate_startup_intelligence_pdf(
                     soft_skills_text = safe_text(soft_skills)
 
                 card_elements = [
-                    Paragraph(f"<b>{role_title}</b> &nbsp;<font color='#2563EB'>({priority})</font>", item_title_style),
-                    Spacer(1, 2),
+                    Paragraph(f"<b>{role_title}</b> &nbsp;&nbsp; {badge_html}", item_title_style),
+                    Spacer(1, 1),
                     Paragraph(f"<b>Department:</b> {dept} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Reports To:</b> {reports_to} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Experience Level:</b> {exp_level}", body_style),
-                    Spacer(1, 2),
-                    Paragraph(f"<b>Why Needed:</b> {why_needed}", body_style),
-                    Paragraph(f"<b>Key Responsibilities:</b> {responsibilities}", body_style),
-                    Paragraph(f"<b>Required Skills:</b> {skills_text}", body_style),
+                    Spacer(1, 1),
+                    Paragraph(f"<b>Purpose & Strategic Value:</b> {why_needed}", body_style),
+                    Paragraph(f"<b>Core Responsibilities:</b> {responsibilities}", body_style),
+                    Paragraph(f"<b>Required Domain / Technical Skills:</b> {skills_text}", body_style),
                 ]
 
                 if soft_skills_text:
-                    card_elements.append(Paragraph(f"<b>Soft Skills:</b> {soft_skills_text}", body_style))
+                    card_elements.append(Paragraph(f"<b>Collaboration & Soft Skills:</b> {soft_skills_text}", body_style))
 
-                story.append(KeepTogether([make_card(card_elements), Spacer(1, 4)]))
+                story.append(make_card(card_elements))
+                story.append(Spacer(1, 4))
 
         render_role_cards(essential_roles, "Essential Roles (Immediate / MVP Stage)")
         render_role_cards(later_roles, "Roles That Can Be Added Later (Scale / Expansion Stage)")
-
-    # Lean Team Advice Card
-    lean_advice = report.get("lean_team_advice") or report.get("team_recommendation")
-    if lean_advice:
-        story.append(Spacer(1, 3))
-        story.append(Paragraph("Lean Team Execution Strategy", h2_style))
-        story.append(make_card([Paragraph(safe_text(lean_advice), body_style)]))
-
-    # Dynamic Organizational Hierarchy Diagram (Supports all depths, 1 to 5+ levels)
-    hierarchy_raw = report.get("team_hierarchy")
-    hierarchy_nodes = list(hierarchy_raw) if isinstance(hierarchy_raw, list) else []
-
-    story.append(Spacer(1, 6))
-    story.append(Paragraph("Dynamic Organizational Hierarchy", h2_style))
-    story.append(Paragraph("<i>Organizational reporting structure mapped from CEO down through all operational tiers:</i>", body_style))
-    story.append(Spacer(1, 4))
-
-    hierarchy_diagram = build_multi_level_hierarchy_diagram(
-        hierarchy_nodes,
-        team_list,
-    )
-    story.append(KeepTogether([hierarchy_diagram, Spacer(1, 6)]))
 
     story.append(section_divider())
 
@@ -1285,9 +1130,9 @@ def generate_startup_intelligence_pdf(
                 if isinstance(v, list):
                     fin_elements.append(Paragraph(f"<b>{label}:</b>", card_label_style))
                     for item in v:
-                        fin_elements.append(Paragraph(f"â€¢ {safe_text(item)}", bullet_style))
+                        fin_elements.append(Paragraph(f"• {safe_text(item)}", bullet_style))
                 else:
-                    fin_elements.append(Paragraph(f"â€¢ <b>{label}:</b> {safe_text(v)}", bullet_style))
+                    fin_elements.append(Paragraph(f"• <b>{label}:</b> {safe_text(v)}", bullet_style))
         elif isinstance(fin_info, list):
             for item in fin_info:
                 if isinstance(item, dict):
@@ -1295,11 +1140,11 @@ def generate_startup_intelligence_pdf(
                     pl = safe_text(item.get("profit_loss"), "Not verified")
                     funding = safe_text(item.get("funding_raised"), "Not verified")
                     src = safe_text(item.get("source"), "Public filing")
-                    fin_elements.append(Paragraph(f"â€¢ <b>Revenue:</b> {rev} | <b>Profit/Loss:</b> {pl} | <b>Funding Raised:</b> {funding} (Source: {src})", bullet_style))
+                    fin_elements.append(Paragraph(f"• <b>Revenue:</b> {rev} | <b>Profit/Loss:</b> {pl} | <b>Funding Raised:</b> {funding} (Source: {src})", bullet_style))
                 else:
-                    fin_elements.append(Paragraph(f"â€¢ {safe_text(item)}", bullet_style))
+                    fin_elements.append(Paragraph(f"• {safe_text(item)}", bullet_style))
         else:
-            fin_elements.append(Paragraph(f"â€¢ {safe_text(fin_info)}", bullet_style))
+            fin_elements.append(Paragraph(f"• {safe_text(fin_info)}", bullet_style))
 
         fin_elements.append(Spacer(1, 2))
         fin_elements.append(Paragraph("<i>Note: Figures and timelines are illustrative estimates and planning assumptions based on domain benchmarks, not guaranteed financial forecasts.</i>", bullet_style))
@@ -1324,16 +1169,16 @@ def generate_startup_intelligence_pdf(
                     cat = safe_text(r.get("category") or r.get("risk_type"), "Risk")
                     desc = safe_text(r.get("description") or r.get("risk"))
                     mit = safe_text(r.get("mitigation") or r.get("mitigation_strategy"), "Active monitoring")
-                    risk_elements.append(Paragraph(f"â€¢ <b>{cat}:</b> {desc}", bullet_style))
+                    risk_elements.append(Paragraph(f"• <b>{cat}:</b> {desc}", bullet_style))
                     risk_elements.append(Paragraph(f"&nbsp;&nbsp;<b>Mitigation:</b> {mit}", bullet_style))
                 else:
-                    risk_elements.append(Paragraph(f"â€¢ {safe_text(r)}", bullet_style))
+                    risk_elements.append(Paragraph(f"• {safe_text(r)}", bullet_style))
         elif isinstance(risk_info, dict):
             for k, v in risk_info.items():
                 label = safe_text(k).replace("_", " ").title()
-                risk_elements.append(Paragraph(f"â€¢ <b>{label}:</b> {safe_text(v)}", bullet_style))
+                risk_elements.append(Paragraph(f"• <b>{label}:</b> {safe_text(v)}", bullet_style))
         else:
-            risk_elements.append(Paragraph(f"â€¢ {safe_text(risk_info)}", bullet_style))
+            risk_elements.append(Paragraph(f"• {safe_text(risk_info)}", bullet_style))
 
         story.append(make_card(risk_elements))
 
@@ -1360,7 +1205,7 @@ def generate_startup_intelligence_pdf(
 
             step_elements = [
                 Paragraph(f"<b>Phase {s_num}: {s_phase}</b> &nbsp;<font color='#2563EB'>({s_time})</font>", item_title_style),
-                Spacer(1, 2),
+                Spacer(1, 1),
                 Paragraph(s_desc, body_style),
             ]
 
@@ -1369,17 +1214,15 @@ def generate_startup_intelligence_pdf(
                 d_text = ", ".join([safe_text(d) for d in deliv]) if isinstance(deliv, list) else safe_text(deliv)
                 step_elements.append(Paragraph(f"<b>Key Deliverables:</b> {d_text}", body_style))
 
-            story.append(KeepTogether([make_card(step_elements), Spacer(1, 4)]))
+            story.append(make_card(step_elements))
+            story.append(Spacer(1, 4))
 
-        story.append(Spacer(1, 6))
-        story.append(Paragraph("<b>Startup Execution Flowchart:</b>", card_label_style))
         story.append(Spacer(1, 4))
+        story.append(Paragraph("<b>Startup Execution Flowchart:</b>", card_label_style))
+        story.append(Spacer(1, 3))
         diagram_flowables = build_roadmap_diagram(roadmap_list)
-        if len(diagram_flowables) <= 8:
-            story.append(KeepTogether(diagram_flowables))
-        else:
-            for df in diagram_flowables:
-                story.append(df)
+        for df in diagram_flowables:
+            story.append(df)
 
     story.append(section_divider())
 
@@ -1418,10 +1261,10 @@ def generate_startup_intelligence_pdf(
 
     source_elements = []
 
-    # 1. Official Company Setup Presence Link
-    source_elements.append(Paragraph("â€¢ <b>LinkedIn Company Page Setup:</b> Establish official venture page", bullet_style))
+    # Official Company Setup Presence Link
+    source_elements.append(Paragraph("• <b>LinkedIn Company Page Setup:</b> Establish official venture page", bullet_style))
     source_elements.append(Paragraph(f"&nbsp;&nbsp;<b>Link:</b> {make_clickable_link('https://www.linkedin.com/company/setup/new/', 'https://www.linkedin.com/company/setup/new/')}", bullet_style))
-    source_elements.append(Spacer(1, 3))
+    source_elements.append(Spacer(1, 2))
 
     if sources_list:
         for src in sources_list:
@@ -1438,10 +1281,10 @@ def generate_startup_intelligence_pdf(
                     meta_line.append(f"<b>Category:</b> {src_cat}")
 
                 meta_str = f" &nbsp;|&nbsp; {' &nbsp;|&nbsp; '.join(meta_line)}" if meta_line else ""
-                source_elements.append(Paragraph(f"â€¢ <b>{src_name}</b>{meta_str}", bullet_style))
+                source_elements.append(Paragraph(f"• <b>{src_name}</b>{meta_str}", bullet_style))
                 source_elements.append(Paragraph(f"&nbsp;&nbsp;<b>Link:</b> {make_clickable_link(src_url, src_url)}", bullet_style))
             elif isinstance(src, str):
-                source_elements.append(Paragraph(f"â€¢ <b>Resource:</b> {make_clickable_link(src, src)}", bullet_style))
+                source_elements.append(Paragraph(f"• <b>Resource:</b> {make_clickable_link(src, src)}", bullet_style))
 
     story.append(make_card(source_elements))
 
