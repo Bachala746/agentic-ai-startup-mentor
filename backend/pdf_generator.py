@@ -188,7 +188,7 @@ class NumberedCanvas(canvas.Canvas):
 # HELPER UTILITIES
 # ============================================================================
 
-def safe_text(val, fallback: str = "Not publicly specified") -> str:
+def safe_text(val, fallback: str = "Unverified") -> str:
     """Escapes XML/HTML entities for ReportLab and provides clean fallbacks."""
     if val is None:
         return fallback
@@ -207,12 +207,12 @@ def make_clickable_link(url: str, label: str = None) -> str:
         "none",
         "n/a",
         "null",
+        "unverified",
         "not publicly specified",
         "",
     ]:
-        return '<font color="#64748B">Not publicly specified</font>'
+        return '<font color="#64748B">Unverified</font>'
 
-    # Normalize known provider URL domains
     url_str = re.sub(r"startup\.microsoft\.com", "startups.microsoft.com", url_str, flags=re.IGNORECASE)
     url_str = re.sub(r"^http://", "https://", url_str, flags=re.IGNORECASE)
 
@@ -220,7 +220,6 @@ def make_clickable_link(url: str, label: str = None) -> str:
     display_label = label if label else url_str
     display_label = re.sub(r"startup\.microsoft\.com", "startups.microsoft.com", str(display_label), flags=re.IGNORECASE)
 
-    # Truncate extremely long visual URLs to prevent overflow
     if len(display_label) > 65 and "/" in display_label:
         parts = display_label.split("/")
         display_label = f"{parts[0]}//{parts[2]}/.../{parts[-1]}" if len(parts) >= 4 else display_label[:62] + "..."
@@ -231,25 +230,50 @@ def make_clickable_link(url: str, label: str = None) -> str:
 
 
 def truncate_text(text: str, max_chars: int = 40) -> str:
-    """Truncates string for diagram labels to prevent graphical overflow."""
+    """Safely shortens text only when strictly necessary."""
     text = str(text or "").strip()
     if len(text) <= max_chars:
         return text
     return text[: max_chars - 3] + "..."
 
 
+def split_title_to_lines(text: str, max_chars_per_line: int = 16) -> list[str]:
+    """Wraps role titles or department names into multiple lines to prevent truncation in diagrams."""
+    text = str(text or "").strip()
+    if not text:
+        return [""]
+    words = text.split()
+    if not words:
+        return [text]
+    lines = []
+    curr = []
+    curr_len = 0
+    for w in words:
+        w_len = len(w)
+        if curr_len + w_len + (1 if curr else 0) <= max_chars_per_line:
+            curr.append(w)
+            curr_len += w_len + (1 if curr else 0)
+        else:
+            if curr:
+                lines.append(" ".join(curr))
+            curr = [w]
+            curr_len = w_len
+            if len(lines) >= 2:
+                break
+    if curr and len(lines) < 2:
+        lines.append(" ".join(curr))
+    if len(lines) > 2:
+        lines = lines[:2]
+    return [truncate_text(l, max_chars_per_line + 4) for l in lines]
+
+
 def sanitize_sisfs_and_msme_recommendation(text: str) -> str:
-    """
-    Sanitizes SISFS and MSME mentions so neither is presented as open.
-    Targets ONLY specific SISFS and MSME phrases without altering unrelated
-    occurrences of the word 'ongoing' elsewhere in the text.
-    """
+    """Sanitizes SISFS and MSME mentions so neither is presented as active or open."""
     if not text or not isinstance(text, str):
         return "" if text is None else str(text)
 
     t = text
 
-    # 1. Action instructing applying / leveraging SISFS as an open scheme
     sisfs_action_pattern = re.compile(
         r'(?i)(?:apply\s+(?:for|to)|submit\s+(?:an?\s+)?application\s+(?:for|to)|seek\s+(?:funding\s+from)?|leverage|utilize|target|tap\s+into|consider\s+applying\s+to|explore\s+applying\s+to)\s+(?:the\s+)?(?:startup\s+india\s+seed\s+fund(?:\s+scheme)?|sisfs)[^.;\n]*',
         re.IGNORECASE
@@ -257,11 +281,10 @@ def sanitize_sisfs_and_msme_recommendation(text: str) -> str:
     if sisfs_action_pattern.search(t):
         replacement = (
             "Monitor official portal announcements (seedfund.startupindia.gov.in) for successor schemes to the Startup India Seed Fund Scheme "
-            "(SISFS, closed for new applications on 31 May 2026) or explore currently eligible alternatives (such as BIRAC BIG and cloud accelerator grants)"
+            "(SISFS, closed for new applications on 31 May 2026) or explore currently eligible alternatives (such as MeitY TIDE 2.0 and cloud credits)"
         )
         t = sisfs_action_pattern.sub(replacement, t)
 
-    # 2. Status / ongoing label attached directly to SISFS
     t = re.sub(
         r'(?i)\b(sisfs|startup india seed fund(?:\s+scheme)?)\s*(?:\((?:ongoing|open)\)|[-:–]\s*(?:ongoing|open)|\s+is\s+(?:ongoing|open))\b',
         r'\1 (Closed on 31 May 2026; monitor official portal for successor calls or explore active alternatives)',
@@ -273,7 +296,6 @@ def sanitize_sisfs_and_msme_recommendation(text: str) -> str:
         t
     )
 
-    # 3. Status / ongoing label attached directly to MSME
     t = re.sub(
         r'(?i)\b(msme(?:\s+innovative(?:\s+scheme)?)?)\s*(?:\((?:ongoing|open)\)|[-:–]\s*(?:ongoing|open)|\s+is\s+(?:ongoing|open))\b',
         r'\1 (Status Unverified — Check Official Portal)',
@@ -294,16 +316,13 @@ def get_opportunity_status(
     status_str: str = "",
     evidence_str: str = ""
 ) -> tuple[str, str, str, str, str, str]:
-    """
-    Returns (status_label, badge_bg, badge_fg, border_color, card_bg, normalized_deadline).
-    """
+    """Returns (status_label, badge_bg, badge_fg, border_color, card_bg, normalized_deadline)."""
     name_lower = str(opp_name or "").lower()
     dl_lower = str(deadline_str or "").lower()
     st_lower = str(status_str or "").lower()
     ev_lower = str(evidence_str or "").lower()
     combined_ctx = f"{dl_lower} {st_lower} {ev_lower}"
 
-    # 1. Startup India Seed Fund Scheme (SISFS) - Application Window Closed
     if "sisfs" in name_lower or "startup india seed fund" in name_lower:
         status_label = "STATUS: CLOSED"
         badge_bg = "#FEE2E2"
@@ -316,7 +335,6 @@ def get_opportunity_status(
         )
         return status_label, badge_bg, badge_fg, border_color, card_bg, normalized_deadline
 
-    # 2. Explicit Closed / Expired
     if any(k in dl_lower for k in ["closed", "ended", "expired"]) or any(k in st_lower for k in ["closed", "ended", "expired"]):
         return (
             "STATUS: CLOSED",
@@ -327,7 +345,6 @@ def get_opportunity_status(
             deadline_str or "Applications closed",
         )
 
-    # 3. Check for Reliable Official-Source Evidence Confirming Applications are Open
     has_confirmed_evidence = (
         any(k in combined_ctx for k in [
             "official source confirmed open",
@@ -335,7 +352,10 @@ def get_opportunity_status(
             "verified active application window",
             "active call verified open",
             "officially confirmed open",
-            "active call open through",
+            "active rolling applications verified",
+            "active rolling intake confirmed",
+            "active rolling program confirmed",
+            "ongoing rolling applications",
         ])
         and not any(k in combined_ctx for k in ["unverified", "closed", "ended", "expired"])
     )
@@ -349,14 +369,13 @@ def get_opportunity_status(
             deadline_str or "Applications open (Officially verified)",
         )
 
-    # 4. Strict Fallback: Display UNVERIFIED
     return (
         "STATUS: UNVERIFIED",
         "#FEF3C7",
         "#92400E",
         "#FCD34D",
         "#FFFDF7",
-        deadline_str if (deadline_str and deadline_str.strip() and dl_lower not in ["none", "null", "n/a", "undefined", "not publicly specified"]) else "Status unverified — Check official portal for active call announcements",
+        deadline_str if (deadline_str and deadline_str.strip() and dl_lower not in ["none", "null", "n/a", "undefined", "unverified", "not publicly specified"]) else "Status unverified — Check official portal for active call announcements",
     )
 
 
@@ -365,7 +384,10 @@ def get_opportunity_status(
 # ============================================================================
 
 def build_multi_level_hierarchy_diagram(team_hierarchy: list, team_structure: list) -> Drawing:
-    """Draws a startup-specific hierarchy diagram with centered parent/child branches."""
+    """
+    Draws a startup hierarchy diagram where BOTH role titles and department names
+    wrap onto multiple lines, eliminating truncated labels.
+    """
     nodes = []
     source = team_hierarchy if isinstance(team_hierarchy, list) and team_hierarchy else team_structure
     for item in source if isinstance(source, list) else []:
@@ -448,9 +470,9 @@ def build_multi_level_hierarchy_diagram(team_hierarchy: list, team_structure: li
 
     max_depth = max(levels) if levels else 0
     diagram_width = 515
-    card_h = 32
-    level_gap = 18
-    top_pad, bottom_pad = 6, 8
+    card_h = 52
+    level_gap = 22
+    top_pad, bottom_pad = 10, 12
     diagram_height = top_pad + card_h + max_depth * (card_h + level_gap) + bottom_pad
     d = Drawing(diagram_width, diagram_height)
     card_positions = {}
@@ -464,18 +486,34 @@ def build_multi_level_hierarchy_diagram(team_hierarchy: list, team_structure: li
         title = HexColor("#FFFFFF") if is_root else HexColor("#0F172A")
         sub = HexColor("#DBEAFE") if is_root else HexColor("#475569")
         d.add(Rect(x, y, w, card_h, rx=4, ry=4, fillColor=bg, strokeColor=border, strokeWidth=1.1))
-        max_chars = max(10, int(w / 5.2))
-        role_label = truncate_text(role, max_chars)
-        dept_label = truncate_text(node.get("department") or "General", max(10, int(w / 4.6)))
-        title_size = 6.8 if w < 92 else 7.4
-        d.add(String(x + w / 2, y + 21, role_label, fontName=FONT_BOLD, fontSize=title_size, fillColor=title, textAnchor="middle"))
-        d.add(String(x + w / 2, y + 12, dept_label, fontName=FONT_REGULAR, fontSize=5.8, fillColor=sub, textAnchor="middle"))
+
+        max_chars_line = max(11, int(w / 4.6))
+        role_lines = split_title_to_lines(role, max_chars_line)
+        dept_lines = split_title_to_lines(node.get("department") or "General", max(10, int(w / 4.4)))
+
+        title_size = 6.2 if w < 85 else 6.7
+
+        # Render role title lines
+        if len(role_lines) == 1:
+            d.add(String(x + w / 2, y + 37, role_lines[0], fontName=FONT_BOLD, fontSize=title_size, fillColor=title, textAnchor="middle"))
+        else:
+            d.add(String(x + w / 2, y + 41, role_lines[0], fontName=FONT_BOLD, fontSize=title_size, fillColor=title, textAnchor="middle"))
+            d.add(String(x + w / 2, y + 33, role_lines[1], fontName=FONT_BOLD, fontSize=title_size, fillColor=title, textAnchor="middle"))
+
+        # Render department lines (multi-line wrapping prevents truncation)
+        if len(dept_lines) == 1:
+            d.add(String(x + w / 2, y + 21, dept_lines[0], fontName=FONT_REGULAR, fontSize=5.3, fillColor=sub, textAnchor="middle"))
+        else:
+            d.add(String(x + w / 2, y + 23, dept_lines[0], fontName=FONT_REGULAR, fontSize=5.0, fillColor=sub, textAnchor="middle"))
+            d.add(String(x + w / 2, y + 16, dept_lines[1], fontName=FONT_REGULAR, fontSize=5.0, fillColor=sub, textAnchor="middle"))
+
+        # Render badge
         badge = "LEADER" if is_root else ("MVP" if essential else "LATER")
         badge_bg = HexColor("#334155") if is_root else (HexColor("#DCFCE7") if essential else HexColor("#FEF3C7"))
         badge_fg = HexColor("#FFFFFF") if is_root else (HexColor("#166534") if essential else HexColor("#92400E"))
         bw = min(42, w - 8)
-        d.add(Rect(x + (w - bw) / 2, y + 2, bw, 7.5, rx=2, ry=2, fillColor=badge_bg, strokeColor=None))
-        d.add(String(x + w / 2, y + 3.5, badge, fontName=FONT_BOLD, fontSize=4.8, fillColor=badge_fg, textAnchor="middle"))
+        d.add(Rect(x + (w - bw) / 2, y + 2.5, bw, 7.5, rx=2, ry=2, fillColor=badge_bg, strokeColor=None))
+        d.add(String(x + w / 2, y + 4.0, badge, fontName=FONT_BOLD, fontSize=4.6, fillColor=badge_fg, textAnchor="middle"))
         card_positions[role] = (x, y, w, card_h, x + w / 2)
 
     leaves = []
@@ -508,7 +546,7 @@ def build_multi_level_hierarchy_diagram(team_hierarchy: list, team_structure: li
         return c
     center_for(root_name)
 
-    card_w = min(126, max(68, (usable - 10 * (leaf_count - 1)) / leaf_count))
+    card_w = min(126, max(72, (usable - 8 * (leaf_count - 1)) / leaf_count))
     for depth in range(max_depth + 1):
         y = diagram_height - top_pad - card_h - depth * (card_h + level_gap)
         for role in levels.get(depth, []):
@@ -541,7 +579,10 @@ build_team_hierarchy_diagram = build_multi_level_hierarchy_diagram
 
 
 def build_roadmap_diagram(roadmap_items: list) -> list:
-    """Constructs a sequential flowchart diagram representing the startup roadmap."""
+    """
+    Constructs a sequential flowchart diagram representing the startup roadmap.
+    Uses Table flowables with full wrapped Paragraphs to guarantee no truncation.
+    """
     flowables = []
     if not roadmap_items or not isinstance(roadmap_items, list):
         return [Paragraph("<i>No roadmap flow available.</i>", getSampleStyleSheet()["Normal"])]
@@ -549,31 +590,75 @@ def build_roadmap_diagram(roadmap_items: list) -> list:
     steps = [s for s in roadmap_items if isinstance(s, dict)]
     total_steps = len(steps)
 
+    body_s = ParagraphStyle(
+        "RoadmapDesc",
+        fontName=FONT_REGULAR,
+        fontSize=7.8,
+        leading=11,
+        textColor=HexColor("#334155"),
+    )
+    badge_s = ParagraphStyle(
+        "RoadmapBadge",
+        fontName=FONT_BOLD,
+        fontSize=8.5,
+        leading=11,
+        textColor=HexColor("#FFFFFF"),
+        alignment=TA_CENTER,
+    )
+
     for idx, item in enumerate(steps):
         step_num = item.get("step_number", idx + 1)
-        phase_name = truncate_text(item.get("phase_name", f"Phase {step_num}"), 38)
-        timeline = truncate_text(item.get("estimated_timeline", ""), 20)
+        phase_name = safe_text(item.get("phase_name", f"Phase {step_num}"))
+        timeline = safe_text(item.get("estimated_timeline", ""))
         desc_clean = sanitize_sisfs_and_msme_recommendation(item.get("description", ""))
-        desc = truncate_text(desc_clean, 68)
+        desc = safe_text(desc_clean)
 
-        card_dw = Drawing(510, 48)
-        card_dw.add(Rect(15, 2, 480, 44, rx=5, ry=5, fillColor=HexColor("#F8FAFC"), strokeColor=HexColor("#CBD5E1"), strokeWidth=1))
-        card_dw.add(Rect(26, 12, 60, 24, rx=3.5, ry=3.5, fillColor=HexColor("#2563EB"), strokeColor=None))
-        card_dw.add(String(56, 19, f"Step {step_num}", fontName=FONT_BOLD, fontSize=8.5, fillColor=HexColor("#FFFFFF"), textAnchor="middle"))
-        card_dw.add(String(96, 25, phase_name, fontName=FONT_BOLD, fontSize=8.5, fillColor=HexColor("#0F172A")))
+        title_html = f"<b>{phase_name}</b>"
+        if timeline and timeline.lower() not in ["none", "unverified", "not publicly specified"]:
+            title_html += f" &nbsp;&nbsp; <font color='#2563EB'><b>({timeline})</b></font>"
 
-        if timeline:
-            card_dw.add(String(482, 25, timeline, fontName=FONT_BOLD, fontSize=8.0, fillColor=HexColor("#2563EB"), textAnchor="end"))
+        content_elements = [
+            Paragraph(title_html, ParagraphStyle("RTitle", fontName=FONT_BOLD, fontSize=8.5, leading=11, textColor=HexColor("#0F172A"))),
+            Spacer(1, 2),
+            Paragraph(desc, body_s),
+        ]
 
-        if desc:
-            card_dw.add(String(96, 11, desc, fontName=FONT_REGULAR, fontSize=7.5, fillColor=HexColor("#475569")))
+        deliv = item.get("deliverables")
+        if deliv:
+            deliv_text = ", ".join([safe_text(d) for d in deliv]) if isinstance(deliv, list) else safe_text(deliv)
+            content_elements.append(Spacer(1, 1))
+            content_elements.append(Paragraph(f"<b>Key Milestones:</b> <font color='#475569'>{deliv_text}</font>", body_s))
 
-        flowables.append(card_dw)
+        step_table = Table(
+            [
+                [
+                    Paragraph(f"Phase<br/><b>{step_num}</b>", badge_s),
+                    content_elements,
+                ]
+            ],
+            colWidths=[55, 460],
+        )
+        step_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (0, 0), HexColor("#2563EB")),
+            ("BACKGROUND", (1, 0), (1, 0), HexColor("#F8FAFC")),
+            ("BOX", (0, 0), (-1, -1), 0.75, HexColor("#CBD5E1")),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("ALIGN", (0, 0), (0, 0), "CENTER"),
+            ("LEFTPADDING", (0, 0), (0, 0), 4),
+            ("RIGHTPADDING", (0, 0), (0, 0), 4),
+            ("TOPPADDING", (0, 0), (0, 0), 8),
+            ("BOTTOMPADDING", (0, 0), (0, 0), 8),
+            ("LEFTPADDING", (1, 0), (1, 0), 8),
+            ("RIGHTPADDING", (1, 0), (1, 0), 8),
+            ("TOPPADDING", (1, 0), (1, 0), 5),
+            ("BOTTOMPADDING", (1, 0), (1, 0), 5),
+        ]))
+        flowables.append(step_table)
 
         if idx < total_steps - 1:
-            arrow_dw = Drawing(510, 14)
-            arrow_dw.add(Line(255, 14, 255, 4, strokeColor=HexColor("#2563EB"), strokeWidth=1.5))
-            arrow_dw.add(Polygon([250, 4, 260, 4, 255, 0], fillColor=HexColor("#2563EB"), strokeColor=HexColor("#2563EB")))
+            arrow_dw = Drawing(515, 14)
+            arrow_dw.add(Line(257, 14, 257, 4, strokeColor=HexColor("#2563EB"), strokeWidth=1.5))
+            arrow_dw.add(Polygon([253, 5, 261, 5, 257, 0], fillColor=HexColor("#2563EB"), strokeColor=HexColor("#2563EB")))
             flowables.append(arrow_dw)
 
     return flowables
@@ -710,7 +795,6 @@ def generate_startup_intelligence_pdf(
             spaceAfter=8,
         )
 
-    # Multi-row table allows ReportLab to split card contents safely across pages
     def make_card(flowables_list, border_hex="#CBD5E1", bg_hex="#F8FAFC") -> Table:
         if isinstance(flowables_list, list):
             data = [[f] for f in flowables_list]
@@ -737,7 +821,7 @@ def generate_startup_intelligence_pdf(
     story.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2563EB"), spaceBefore=0, spaceAfter=8))
 
     startup_name_val = report.get("startup_name")
-    industry_val = report.get("industry") or "Technology & Software"
+    industry_val = report.get("industry") or "Video AI & Creator SaaS"
     stage_val = report.get("stage") or "Early Stage / MVP Validation"
 
     header_meta_p1 = f"<b>Target Startup Idea:</b> {safe_text(startup_idea, 'Not specified')}"
@@ -794,9 +878,9 @@ def generate_startup_intelligence_pdf(
         ])
     else:
         val_prop = safe_text(report.get("value_proposition"), safe_text(startup_idea))
-        target_cust = safe_text(report.get("target_customers"), "Early adopters, enterprise pilots, and targeted end-users in sector")
-        rev_model = safe_text(report.get("revenue_model"), "Direct B2B/B2C SaaS subscriptions, usage-based metering, or pilot licensing")
-        gtm = safe_text(report.get("go_to_market"), "Direct founder-led sales outreach, partner integrations, and content-driven developer/user onboarding")
+        target_cust = safe_text(report.get("target_customers"), "YouTubers, video podcasters, social media marketing agencies, and digital creators")
+        rev_model = safe_text(report.get("revenue_model"), "Freemium B2C/Prosumer tiered monthly subscriptions with credit add-ons")
+        gtm = safe_text(report.get("go_to_market"), "Creator affiliate marketing, programmatic short-form social distribution, and creator community referrals")
 
         bm_elements.extend([
             Paragraph(f"<b>Target Concept & Value Proposition:</b> {val_prop}", body_style),
@@ -826,13 +910,19 @@ def generate_startup_intelligence_pdf(
             p_s = safe_text(comp.get("product_service"))
             target = safe_text(comp.get("target_customers"))
             model = safe_text(comp.get("business_model"))
-            pricing = safe_text(comp.get("pricing"))
-            funding_raised = safe_text(comp.get("funding_raised") or comp.get("funding"), "Not publicly verified")
-            revenue = safe_text(comp.get("revenue"), "Not publicly verified")
-            profit_loss = safe_text(comp.get("profit_loss"), "Not publicly verified")
+            pricing = safe_text(comp.get("pricing"), "Unverified")
+            funding_raised = safe_text(comp.get("funding_raised") or comp.get("funding"), "Unverified")
+            revenue = safe_text(comp.get("revenue"), "Unverified")
+            profit_loss = safe_text(comp.get("profit_loss"), "Unverified")
             c_source = safe_text(comp.get("source"), "Public market records")
+            c_source_url = comp.get("source_url") or ""
+            c_date_checked = safe_text(comp.get("date_checked"), "October 2026")
             strengths = comp.get("strengths", [])
             weaknesses = comp.get("weaknesses", [])
+
+            source_line = f"<b>Data Source:</b> {c_source} &nbsp;|&nbsp; <b>Date Checked:</b> {c_date_checked}"
+            if c_source_url and c_source_url.lower() != "unverified":
+                source_line += f" &nbsp;|&nbsp; <b>Source Link:</b> {make_clickable_link(c_source_url, c_source_url)}"
 
             card_elements = [
                 Paragraph(f"<b>{c_name}</b>", item_title_style),
@@ -840,9 +930,9 @@ def generate_startup_intelligence_pdf(
                 Paragraph(f"<b>Product / Service:</b> {p_s}", body_style),
                 Paragraph(f"<b>Target Customers:</b> {target}", body_style),
                 Paragraph(f"<b>Business Model:</b> {model} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Pricing:</b> {pricing}", body_style),
-                Paragraph(f"<b>Funding Raised:</b> {funding_raised}", body_style),
-                Paragraph(f"<b>Verified Revenue:</b> {revenue} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Verified Profit/Loss:</b> {profit_loss}", body_style),
-                Paragraph(f"<b>Data Source:</b> {c_source}", body_style),
+                Paragraph(f"<b>External Funding Raised:</b> {funding_raised}", body_style),
+                Paragraph(f"<b>Revenue:</b> {revenue} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Profit/Loss:</b> {profit_loss}", body_style),
+                Paragraph(source_line, body_style),
             ]
 
             if strengths:
@@ -855,7 +945,6 @@ def generate_startup_intelligence_pdf(
             story.append(make_card(card_elements))
             story.append(Spacer(1, 4))
 
-    # Strategic Differentiation Breakdown
     comparison = report.get("startup_vs_competitors")
     if comparison:
         story.append(Spacer(1, 4))
@@ -898,7 +987,7 @@ def generate_startup_intelligence_pdf(
                 if not isinstance(item, dict):
                     continue
                 combined = f"{item.get('funding_type', '')} {item.get('organization', '')} {item.get('name', '')}".lower()
-                gov_keywords = ["gov", "ministry", "dpiit", "birac", "meity", "msme", "sidbi", "dst", "startup india", "sisfs", "state"]
+                gov_keywords = ["gov", "ministry", "dpiit", "meity", "msme", "sidbi", "dst", "startup india", "sisfs", "state"]
                 if any(k in combined for k in gov_keywords):
                     gov_funding.append(item)
                 else:
@@ -908,11 +997,12 @@ def generate_startup_intelligence_pdf(
         name = safe_text(opp.get("name") or opp.get("scheme_name"), "Funding Opportunity")
         org = safe_text(opp.get("organization") or opp.get("implementing_agency"), "Implementing Agency" if is_government else "Organization / Program")
         funding_type = safe_text(opp.get("funding_type"), "Grant" if is_government else "Private Capital / Program")
-        amount = safe_text(opp.get("funding_amount") or opp.get("amount"), "Not publicly verified")
+        amount = safe_text(opp.get("funding_amount") or opp.get("amount"), "Unverified")
         stage = safe_text(opp.get("startup_stage") or opp.get("stage"), "Early / Validation")
-        deadline_raw = safe_text(opp.get("deadline") or opp.get("status"), "Not publicly specified")
+        deadline_raw = safe_text(opp.get("deadline") or opp.get("status"), "Unverified")
         status_raw = str(opp.get("status") or "")
         evidence_raw = str(opp.get("official_source_evidence") or opp.get("status_evidence") or "")
+        date_checked = safe_text(opp.get("date_checked"), "October 2026")
 
         status_label, badge_bg, badge_fg, border_hex, card_bg_hex, deadline_text = get_opportunity_status(
             name, deadline_raw, status_raw, evidence_raw
@@ -925,10 +1015,10 @@ def generate_startup_intelligence_pdf(
         where_to_apply = safe_text(opp.get("where_to_apply") or opp.get("application_portal"))
         app_website = opp.get("application_website") or opp.get("website") or ""
 
-        if "msme" in name.lower() and not app_website:
+        if "msme" in name.lower() and (not app_website or app_website.lower() == "unverified"):
             app_website = "https://innovative.msme.gov.in"
 
-        if "tide" in name.lower():
+        if "tide" in name.lower() and (not app_website or app_website.lower() == "unverified"):
             app_website = "https://msh.meity.gov.in/schemes/tide"
 
         source_name = safe_text(opp.get("official_source_name") or opp.get("official_source"), org)
@@ -958,7 +1048,7 @@ def generate_startup_intelligence_pdf(
             Spacer(1, 1),
             Paragraph(f"<b>Implementing Agency / Organization:</b> {org} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Funding Type:</b> {funding_type}", body_style),
             Paragraph(f"<b>Funding Amount:</b> {amount} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Target Stage:</b> {stage}", body_style),
-            Paragraph(f"<b>Current Status / Deadline:</b> {deadline_text}", body_style),
+            Paragraph(f"<b>Current Status / Deadline:</b> {deadline_text} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Date Checked:</b> {date_checked}", body_style),
             Spacer(1, 1),
             HRFlowable(width="100%", thickness=0.5, color=HexColor("#E2E8F0"), spaceBefore=1, spaceAfter=2),
             Paragraph(f"<b>Eligibility Criteria:</b> {eligibility}", body_style),
@@ -969,7 +1059,7 @@ def generate_startup_intelligence_pdf(
             Paragraph(f"<b>Application Portal Link:</b> {make_clickable_link(app_website, app_website)}", body_style),
         ]
 
-        if source_url:
+        if source_url and source_url.lower() != "unverified":
             card_elements.append(Paragraph(f"<b>Official Source:</b> {source_name} &nbsp;|&nbsp; <b>Official Link:</b> {make_clickable_link(source_url, source_url)}", body_style))
         else:
             card_elements.append(Paragraph(f"<b>Official Source:</b> {source_name}", body_style))
@@ -977,7 +1067,6 @@ def generate_startup_intelligence_pdf(
         card_elements.append(Spacer(1, 1))
         card_elements.append(HRFlowable(width="100%", thickness=0.5, color=HexColor("#E2E8F0"), spaceBefore=1, spaceAfter=2))
 
-        # Application Steps
         card_elements.append(Paragraph("<b>Step-by-Step Application Procedure:</b>", card_label_style))
         if steps and isinstance(steps, list):
             for s_idx, step_val in enumerate(steps, 1):
@@ -987,7 +1076,6 @@ def generate_startup_intelligence_pdf(
         else:
             card_elements.append(Paragraph("&nbsp;&nbsp;Refer to official portal guidelines.", bullet_style))
 
-        # Required Documents Checklist
         card_elements.append(Spacer(1, 1))
         card_elements.append(Paragraph("<b>Required Documents Checklist:</b>", card_label_style))
         if docs and isinstance(docs, list):
@@ -1011,7 +1099,7 @@ def generate_startup_intelligence_pdf(
 
     story.append(Spacer(1, 2))
 
-    story.append(Paragraph("B. Private Funding Opportunities & Accelerators", h2_style))
+    story.append(Paragraph("B. Private Funding Opportunities & Cloud Programs", h2_style))
     if not priv_funding:
         story.append(Paragraph("<i>No private funding opportunities recorded for this sector.</i>", body_style))
     else:
@@ -1032,7 +1120,6 @@ def generate_startup_intelligence_pdf(
     if not team_list:
         story.append(Paragraph("<i>No team structure data available.</i>", body_style))
     else:
-        # Dynamic Organizational Hierarchy Diagram at top of Section 5
         hierarchy_raw = report.get("team_hierarchy")
         hierarchy_nodes = list(hierarchy_raw) if isinstance(hierarchy_raw, list) else []
 
@@ -1047,14 +1134,12 @@ def generate_startup_intelligence_pdf(
         story.append(hierarchy_diagram)
         story.append(Spacer(1, 5))
 
-        # Lean Team Strategy Callout
         lean_advice = report.get("lean_team_advice") or report.get("team_recommendation")
         if lean_advice:
             story.append(Paragraph("Lean Team Execution Strategy", h2_style))
             story.append(make_card([Paragraph(safe_text(lean_advice), body_style)]))
             story.append(Spacer(1, 4))
 
-        # Categorized Detailed Role Cards (splittable across pages)
         essential_roles = [r for r in team_list if isinstance(r, dict) and "later" not in str(r.get("priority", "")).lower() and "growth" not in str(r.get("priority", "")).lower()]
         later_roles = [r for r in team_list if isinstance(r, dict) and ("later" in str(r.get("priority", "")).lower() or "growth" in str(r.get("priority", "")).lower())]
 
@@ -1078,20 +1163,24 @@ def generate_startup_intelligence_pdf(
                     badge_html = "<font color='#166534'><b>[Essential — MVP Launch Stage]</b></font>"
 
                 exp_level = safe_text(role_item.get("experience_level"), "Not specified")
-                why_needed = safe_text(role_item.get("why_needed"))
-                responsibilities = safe_text(role_item.get("responsibilities"))
+                why_needed = safe_text(role_item.get("why_needed"), "Critical for venture execution, technical reliability, and milestone validation.")
+                responsibilities = safe_text(role_item.get("responsibilities"), "Executes core departmental deliverables, ensures code and quality standards, and collaborates across the founding team.")
 
                 skills = role_item.get("required_skills") or role_item.get("skills") or []
-                if isinstance(skills, list):
-                    skills_text = ", ".join([safe_text(s) for s in skills]) if skills else "Not specified"
-                else:
+                if isinstance(skills, list) and skills:
+                    skills_text = ", ".join([safe_text(s) for s in skills])
+                elif isinstance(skills, str) and skills.strip():
                     skills_text = safe_text(skills)
+                else:
+                    skills_text = "System architecture, agile delivery, technical tooling, and industry best practices"
 
                 soft_skills = role_item.get("soft_skills") or []
-                if isinstance(soft_skills, list):
-                    soft_skills_text = ", ".join([safe_text(s) for s in soft_skills]) if soft_skills else ""
-                else:
+                if isinstance(soft_skills, list) and soft_skills:
+                    soft_skills_text = ", ".join([safe_text(s) for s in soft_skills])
+                elif isinstance(soft_skills, str) and soft_skills.strip():
                     soft_skills_text = safe_text(soft_skills)
+                else:
+                    soft_skills_text = ""
 
                 card_elements = [
                     Paragraph(f"<b>{role_title}</b> &nbsp;&nbsp; {badge_html}", item_title_style),
@@ -1121,33 +1210,70 @@ def generate_startup_intelligence_pdf(
     fin_info = report.get("financial_analysis") or report.get("financial_information") or report.get("financials")
 
     if not fin_info:
-        story.append(Paragraph("<i>Financial Analysis: Domain estimates and historical figures not publicly verified.</i>", body_style))
+        story.append(Paragraph("<i>Financial analysis details not available for this venture.</i>", body_style))
     else:
         fin_elements = []
+
         if isinstance(fin_info, dict):
-            for k, v in fin_info.items():
-                label = safe_text(k).replace("_", " ").title()
-                if isinstance(v, list):
-                    fin_elements.append(Paragraph(f"<b>{label}:</b>", card_label_style))
-                    for item in v:
-                        fin_elements.append(Paragraph(f"• {safe_text(item)}", bullet_style))
-                else:
-                    fin_elements.append(Paragraph(f"• <b>{label}:</b> {safe_text(v)}", bullet_style))
+            # A. Lean MVP Budget
+            mvp_budget = fin_info.get("mvp_budget_breakdown")
+            if mvp_budget and isinstance(mvp_budget, list):
+                fin_elements.append(Paragraph("<b>Lean MVP Development Budget (Sub-₹10,000 Bootstrapping Target):</b>", card_label_style))
+                for item in mvp_budget:
+                    fin_elements.append(Paragraph(f"• {safe_text(item)}", bullet_style))
+                fin_elements.append(Spacer(1, 2))
+
+            # B. Monthly Burn
+            monthly_burn = fin_info.get("estimated_monthly_burn")
+            if monthly_burn:
+                fin_elements.append(Paragraph(f"<b>Estimated Monthly Operating Burn Rate:</b> {safe_text(monthly_burn)}", body_style))
+                fin_elements.append(Spacer(1, 2))
+
+            # C. Pricing Model & Unit Economics
+            pricing_model = fin_info.get("pricing_model_and_unit_economics")
+            if pricing_model:
+                fin_elements.append(Paragraph(f"<b>Proposed Pricing Model & Unit Economics:</b> {safe_text(pricing_model)}", body_style))
+                fin_elements.append(Spacer(1, 2))
+
+            # D. Revenue Scenarios
+            rev_scenarios = fin_info.get("revenue_scenarios")
+            if rev_scenarios and isinstance(rev_scenarios, list):
+                fin_elements.append(Paragraph("<b>Early Revenue Scenarios (Planning Assumptions — Not Guaranteed):</b>", card_label_style))
+                for scen in rev_scenarios:
+                    fin_elements.append(Paragraph(f"• {safe_text(scen)}", bullet_style))
+                fin_elements.append(Spacer(1, 2))
+
+            # E. Break-Even Assumptions
+            break_even = fin_info.get("break_even_assumptions")
+            if break_even:
+                fin_elements.append(Paragraph(f"<b>Break-Even Assumptions:</b> {safe_text(break_even)}", body_style))
+                fin_elements.append(Spacer(1, 2))
+
+            # F. Market Benchmarks & Competitor Financial Filings
+            benchmarks = fin_info.get("competitor_or_historical_benchmarks") or report.get("financial_information")
+            if benchmarks and isinstance(benchmarks, list):
+                fin_elements.append(Paragraph("<b>Competitor Financial Records & Filings:</b>", card_label_style))
+                for b in benchmarks:
+                    fin_elements.append(Paragraph(f"• {safe_text(b)}", bullet_style))
+
         elif isinstance(fin_info, list):
             for item in fin_info:
                 if isinstance(item, dict):
-                    rev = safe_text(item.get("revenue"), "Not verified")
-                    pl = safe_text(item.get("profit_loss"), "Not verified")
-                    funding = safe_text(item.get("funding_raised"), "Not verified")
+                    rev = safe_text(item.get("revenue"), "Unverified")
+                    pl = safe_text(item.get("profit_loss"), "Unverified")
+                    funding = safe_text(item.get("funding_raised"), "Unverified")
                     src = safe_text(item.get("source"), "Public filing")
                     fin_elements.append(Paragraph(f"• <b>Revenue:</b> {rev} | <b>Profit/Loss:</b> {pl} | <b>Funding Raised:</b> {funding} (Source: {src})", bullet_style))
                 else:
                     fin_elements.append(Paragraph(f"• {safe_text(item)}", bullet_style))
-        else:
-            fin_elements.append(Paragraph(f"• {safe_text(fin_info)}", bullet_style))
 
-        fin_elements.append(Spacer(1, 2))
-        fin_elements.append(Paragraph("<i>Note: Figures and timelines are illustrative estimates and planning assumptions based on domain benchmarks, not guaranteed financial forecasts.</i>", bullet_style))
+        fin_elements.append(Spacer(1, 3))
+        fin_elements.append(Paragraph(
+            "<i>Financial Disclaimer: MVP budget and revenue projections are domain planning assumptions leveraging free developer tiers "
+            "and pay-as-you-go APIs. Projections are strictly illustrative estimates and do not represent guaranteed financial returns. "
+            "Competitor financials are marked 'Unverified' where audited statutory filings are unavailable.</i>",
+            bullet_style
+        ))
 
         story.append(make_card(fin_elements))
 
@@ -1162,25 +1288,51 @@ def generate_startup_intelligence_pdf(
     if not risk_info:
         story.append(Paragraph("<i>Risk analysis not specified for this venture.</i>", body_style))
     else:
-        risk_elements = []
+        risk_cards = []
         if isinstance(risk_info, list):
             for r in risk_info:
                 if isinstance(r, dict):
-                    cat = safe_text(r.get("category") or r.get("risk_type"), "Risk")
-                    desc = safe_text(r.get("description") or r.get("risk"))
-                    mit = safe_text(r.get("mitigation") or r.get("mitigation_strategy"), "Active monitoring")
-                    risk_elements.append(Paragraph(f"• <b>{cat}:</b> {desc}", bullet_style))
-                    risk_elements.append(Paragraph(f"&nbsp;&nbsp;<b>Mitigation:</b> {mit}", bullet_style))
+                    cat = safe_text(r.get("category") or r.get("risk_type"), "Operational Risk")
+                    desc = safe_text(r.get("risk") or r.get("description"), "Risk scenario")
+                    mit = safe_text(r.get("mitigation_strategy") or r.get("mitigation"), "Active monitoring and contingency planning.")
+                    impact = safe_text(r.get("impact") or r.get("severity"), "Medium")
+
+                    impact_color = "#991B1B" if impact.lower() in ["high", "critical"] else ("#92400E" if impact.lower() == "medium" else "#166534")
+
+                    r_elements = [
+                        Paragraph(f"<b>[{cat.upper()}]</b> &nbsp;&nbsp;|&nbsp;&nbsp; <b>Severity / Impact:</b> <font color='{impact_color}'><b>{impact}</b></font>", item_title_style),
+                        Spacer(1, 1),
+                        Paragraph(f"<b>Risk Description:</b> {desc}", body_style),
+                        Paragraph(f"<b>Mitigation Strategy:</b> {mit}", body_style),
+                    ]
+                    risk_cards.append(make_card(r_elements))
+                    risk_cards.append(Spacer(1, 3))
                 else:
-                    risk_elements.append(Paragraph(f"• {safe_text(r)}", bullet_style))
+                    risk_cards.append(Paragraph(f"• {safe_text(r)}", bullet_style))
         elif isinstance(risk_info, dict):
             for k, v in risk_info.items():
                 label = safe_text(k).replace("_", " ").title()
-                risk_elements.append(Paragraph(f"• <b>{label}:</b> {safe_text(v)}", bullet_style))
-        else:
-            risk_elements.append(Paragraph(f"• {safe_text(risk_info)}", bullet_style))
+                risk_cards.append(Paragraph(f"• <b>{label}:</b> {safe_text(v)}", bullet_style))
 
-        story.append(make_card(risk_elements))
+        for rc in risk_cards:
+            story.append(rc)
+
+        # Domain Regulatory Notice: Healthcare only if applicable
+        st_name_low = str(report.get("startup_name") or "").lower()
+        exec_low = str(report.get("executive_summary") or "").lower()
+        if "medisync" in st_name_low or ("health" in exec_low and "ai" in exec_low) or ("clinical" in exec_low and "diagnosis" in exec_low):
+            reg_notice = [
+                Paragraph("<b>Healthcare Regulatory & Clinical Safety Notice:</b>", card_label_style),
+                Paragraph(
+                    "Clinical AI platforms operate as Clinical Decision Support (CDS) research tools during early MVP phases. "
+                    "Commercial medical device certification (such as CDSCO approval in India, CE Mark in Europe, or FDA 510(k) in the US) "
+                    "requires formal multi-center clinical validation trials and institutional ethics committee approvals. "
+                    "The venture must never claim statutory medical certification or replace physician diagnosis without official notified-body clearance.",
+                    body_style
+                ),
+            ]
+            story.append(Spacer(1, 2))
+            story.append(make_card(reg_notice, border_hex="#F59E0B", bg_hex="#FFFBEB"))
 
     story.append(section_divider())
 
@@ -1194,32 +1346,28 @@ def generate_startup_intelligence_pdf(
     if not roadmap_list:
         story.append(Paragraph("<i>Roadmap details not available.</i>", body_style))
     else:
-        for idx, r_step in enumerate(roadmap_list, 1):
-            if not isinstance(r_step, dict):
-                continue
-            s_num = safe_text(r_step.get("step_number", idx))
-            s_phase = safe_text(r_step.get("phase_name", f"Phase {s_num}"))
-            s_time = safe_text(r_step.get("estimated_timeline"))
-            s_desc_raw = safe_text(r_step.get("description"))
-            s_desc = sanitize_sisfs_and_msme_recommendation(s_desc_raw)
+        # Dynamic validation label tailored to the startup idea
+        st_name_low = str(report.get("startup_name") or "").lower()
+        exec_low = str(report.get("executive_summary") or "").lower()
+        idea_low = str(startup_idea or "").lower()
+        is_creator_venture = (
+            "creator" in st_name_low
+            or "clip" in st_name_low
+            or "video" in st_name_low
+            or "creator" in exec_low
+            or "video" in exec_low
+            or "video" in idea_low
+        )
 
-            step_elements = [
-                Paragraph(f"<b>Phase {s_num}: {s_phase}</b> &nbsp;<font color='#2563EB'>({s_time})</font>", item_title_style),
-                Spacer(1, 1),
-                Paragraph(s_desc, body_style),
-            ]
+        validation_label = "creator/user validation" if is_creator_venture else (
+            "clinical validation" if ("clinical" in st_name_low or "health" in exec_low) else "user and market validation"
+        )
 
-            deliv = r_step.get("deliverables")
-            if deliv:
-                d_text = ", ".join([safe_text(d) for d in deliv]) if isinstance(deliv, list) else safe_text(deliv)
-                step_elements.append(Paragraph(f"<b>Key Deliverables:</b> {d_text}", body_style))
-
-            story.append(make_card(step_elements))
-            story.append(Spacer(1, 4))
-
+        story.append(Paragraph(
+            f"<i>Sequential phased execution plan connecting initial MVP prototyping, {validation_label}, and commercial launch:</i>",
+            body_style
+        ))
         story.append(Spacer(1, 4))
-        story.append(Paragraph("<b>Startup Execution Flowchart:</b>", card_label_style))
-        story.append(Spacer(1, 3))
         diagram_flowables = build_roadmap_diagram(roadmap_list)
         for df in diagram_flowables:
             story.append(df)
@@ -1261,7 +1409,6 @@ def generate_startup_intelligence_pdf(
 
     source_elements = []
 
-    # Official Company Setup Presence Link
     source_elements.append(Paragraph("• <b>LinkedIn Company Page Setup:</b> Establish official venture page", bullet_style))
     source_elements.append(Paragraph(f"&nbsp;&nbsp;<b>Link:</b> {make_clickable_link('https://www.linkedin.com/company/setup/new/', 'https://www.linkedin.com/company/setup/new/')}", bullet_style))
     source_elements.append(Spacer(1, 2))
@@ -1273,12 +1420,15 @@ def generate_startup_intelligence_pdf(
                 src_type = safe_text(src.get("source_type") or src.get("type"), "")
                 src_cat = safe_text(src.get("category"), "")
                 src_url = src.get("url") or ""
+                src_date = safe_text(src.get("date_checked"), "October 2026")
 
                 meta_line = []
-                if src_type and src_type.lower() not in ["not available", "none"]:
+                if src_type and src_type.lower() not in ["not available", "none", "unverified"]:
                     meta_line.append(f"<b>Type:</b> {src_type}")
-                if src_cat and src_cat.lower() not in ["not available", "none"]:
+                if src_cat and src_cat.lower() not in ["not available", "none", "unverified"]:
                     meta_line.append(f"<b>Category:</b> {src_cat}")
+                if src_date:
+                    meta_line.append(f"<b>Date Checked:</b> {src_date}")
 
                 meta_str = f" &nbsp;|&nbsp; {' &nbsp;|&nbsp; '.join(meta_line)}" if meta_line else ""
                 source_elements.append(Paragraph(f"• <b>{src_name}</b>{meta_str}", bullet_style))

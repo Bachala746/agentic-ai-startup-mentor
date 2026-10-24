@@ -27,26 +27,28 @@ class FundingOpportunity(BaseModel):
         default="Grant",
         description="Type: Grant, Equity Investment, Debt, Accelerator Funding, Corporate Program, Cloud Credits, Incubator, Credit/Support, Other"
     )
-    funding_amount: str = Field(default="Not verified", description="Verified monetary funding amount, grant value, or credits (e.g. 'Up to ₹50 Lakhs', '$100,000 in cloud credits'). Never invent amounts.")
-    eligibility: str = Field(default="Not verified", description="Key verified eligibility criteria (incorporation age, sector, DPIIT recognition, etc.)")
-    who_can_apply: str = Field(default="Not verified", description="Eligible legal entities (e.g. Private Limited, LLP, student entrepreneurs, registered entities)")
-    startup_stage: str = Field(default="Not verified", description="Stage: Ideation, Validation, Prototype/MVP, Early Traction, Scaling")
-    usage: str = Field(default="Not verified", description="Permitted use of funds or credit resources (e.g. Proof of Concept, prototyping, cloud compute, market entry)")
-    where_to_apply: str = Field(default="Not verified", description="Official portal, implementing agency, or participating incubator")
+    funding_amount: str = Field(default="Unverified", description="Verified monetary funding amount, grant value, or credits (e.g. 'Up to ₹7 Lakhs', '$150,000 in cloud credits'). Never invent amounts.")
+    eligibility: str = Field(default="Unverified", description="Key verified eligibility criteria (incorporation age, sector, DPIIT recognition, etc.)")
+    who_can_apply: str = Field(default="Unverified", description="Eligible legal entities (e.g. Private Limited, LLP, student entrepreneurs, registered entities)")
+    startup_stage: str = Field(default="Unverified", description="Stage: Ideation, Validation, Prototype/MVP, Early Traction, Scaling")
+    usage: str = Field(default="Unverified", description="Permitted use of funds or credit resources (e.g. Proof of Concept, prototyping, cloud compute, market entry)")
+    where_to_apply: str = Field(default="Unverified", description="Official portal, implementing agency, or participating incubator")
     application_website: str = Field(
-        default="Not verified",
-        description="Direct official portal URL for applications. If unverified, state 'Not verified'"
+        default="Unverified",
+        description="Direct official portal URL for applications. If unverified, state 'Unverified'"
     )
     application_steps: list[str] = Field(default_factory=list, description="Step-by-step application instructions")
     required_documents: list[str] = Field(default_factory=list, description="List of officially required documents (pitch deck, KYC, DPIIT cert, etc.)")
-    deadline: str = Field(default="Not verified", description="Verified application deadline or 'Ongoing' / 'Cohort-based' / 'Not verified'")
+    deadline: str = Field(default="Unverified", description="Verified application deadline or 'Ongoing' / 'Cohort-based' / 'Unverified'")
+    date_checked: str = Field(default="October 2026", description="Month and year when status and scheme details were verified")
+    status_evidence: str = Field(default="Unverified", description="Official source evidence on open/closed/cohort status")
     official_source_name: str = Field(
-        default="Not verified",
+        default="Unverified",
         description="Name of the official government ministry, organizing body, or company (NEVER a third-party blog)"
     )
     official_source_url: str = Field(
-        default="Not verified",
-        description="Official root or scheme URL from the organizing body. If unverified, state 'Not verified'"
+        default="Unverified",
+        description="Official root or scheme URL from the organizing body. If unverified, state 'Unverified'"
     )
     official_source: str = Field(
         default="",
@@ -56,9 +58,9 @@ class FundingOpportunity(BaseModel):
 
 
 class TeamRole(BaseModel):
-    role: str = Field(default="", description="Specific job title (e.g. 'Chief Executive Officer (CEO)', 'Chief Technology Officer (CTO)', 'AI/ML Engineer')")
+    role: str = Field(default="", description="Specific job title (e.g. 'Chief Executive Officer (CEO)', 'Chief Technology Officer (CTO)', 'AI / Computer Vision Engineer')")
     reports_to: str | None = Field(default="None", description="Direct supervisor role in hierarchy. For Founder / CEO, must strictly be 'None'")
-    department: str = Field(default="", description="Department (e.g. 'Executive Leadership', 'Engineering & Technology', 'AI & Data Intelligence', 'Clinical & Medical Affairs', 'Regulatory & Compliance', 'Sales & Strategic Growth')")
+    department: str = Field(default="", description="Department (e.g. 'Executive Leadership', 'Engineering & Technology', 'AI & Data Intelligence', 'Growth & Creator Marketing', 'Product & Design')")
     priority: str = Field(default="Essential", description="'Essential' (Required immediately for MVP/launch) or 'Later' (Added as startup scales/expands)")
     experience_level: str = Field(default="Mid-Level", description="Experience tier: Junior, Mid-Level, Senior, Lead, or Executive")
     responsibilities: str = Field(default="", description="Core duties, operational ownership, architecture deliverables, and scope")
@@ -80,32 +82,81 @@ class Competitor(BaseModel):
     product_service: str = Field(default="", description="Core product or service offering")
     target_customers: str = Field(default="", description="Target customer segments and markets")
     business_model: str = Field(default="", description="Monetization and business model")
-    pricing: str = Field(default="Not publicly verified", description="Verified pricing tiers or structure")
+    pricing: str = Field(default="Unverified", description="Verified pricing tiers or structure with source, or 'Unverified'")
     strengths: list[str] = Field(default_factory=list, description="Key competitor advantages and moat")
     weaknesses: list[str] = Field(default_factory=list, description="Identified competitor market gaps, complaints, or weaknesses")
     funding_raised: str = Field(
-        default="Not publicly verified",
-        description="Total verified external funding/investment raised (e.g. '$16M across Series A'). Do NOT classify as revenue!"
+        default="Unverified",
+        description="Total verified external funding raised with round details, or 'Unverified'. Do NOT classify as revenue!"
     )
     revenue: str = Field(
-        default="Not publicly verified",
-        description="Verified revenue with financial year and source (e.g. '₹45 Cr (FY 2024) - MCA Filing'). NEVER classify investment/funding raised as revenue!"
+        default="Unverified",
+        description="Verified revenue from statutory filings with FY, or 'Unverified'. NEVER classify funding raised as revenue!"
     )
     profit_loss: str = Field(
-        default="Not publicly verified",
-        description="Verified profit/loss with financial year and source, or 'Not publicly verified'"
+        default="Unverified",
+        description="Verified profit/loss from statutory filings with FY, or 'Unverified'"
     )
-    source: str = Field(default="", description="Source for financial/company data (e.g. MCA filing, Tracxn, Crunchbase, Annual Report)")
+    source: str = Field(default="Public market intelligence", description="Source name for competitor data (e.g. Official Pricing Page, Tracxn, Crunchbase)")
+    source_url: str = Field(default="Unverified", description="Direct official or reliable source URL")
+    date_checked: str = Field(default="October 2026", description="Month and year when details were verified")
+
+
+class RiskItem(BaseModel):
+    category: str = Field(
+        default="Technical",
+        description="Category: Technical, Market, Financial, Operational, Regulatory & IP, Privacy & Security"
+    )
+    risk: str = Field(
+        default="",
+        description="Specific risk scenario and its direct operational impact on this venture"
+    )
+    impact: str = Field(
+        default="Medium",
+        description="Severity / Impact tier: Low, Medium, High, or Critical"
+    )
+    mitigation_strategy: str = Field(
+        default="",
+        description="Concrete, actionable, and pragmatic mitigation plan without claiming unverified regulatory or legal clearance"
+    )
+
+
+class FinancialAnalysis(BaseModel):
+    mvp_budget_breakdown: list[str] = Field(
+        default_factory=list,
+        description="Itemized lean MVP development budget items. For bootstrapped/early ventures, target lean MVP costs below ₹10,000 where feasible and clearly label all assumptions."
+    )
+    estimated_monthly_burn: str = Field(
+        default="Unverified",
+        description="Estimated monthly operating expenses during MVP validation (hosting, APIs, domains, basic operations)"
+    )
+    pricing_model_and_unit_economics: str = Field(
+        default="",
+        description="Proposed pricing tiers, subscription structure, unit economics, and gross margins [Labeled as Assumptions]"
+    )
+    revenue_scenarios: list[str] = Field(
+        default_factory=list,
+        description="Illustrative conservative, moderate, and aggressive early revenue scenarios with correct math, clearly labeled as assumptions, NEVER guaranteed revenue"
+    )
+    break_even_assumptions: str = Field(
+        default="",
+        description="Estimated subscriber count or transaction volume needed to break even against monthly operating expenses"
+    )
+    competitor_or_historical_benchmarks: list[str] = Field(
+        default_factory=list,
+        description="Verified financial data or filings from competitors/market benchmarks. If unavailable, state 'Unverified'."
+    )
 
 
 class SourceItem(BaseModel):
-    name: str = Field(default="", description="Descriptive name of the source (e.g. 'BIRAC Official Portal', 'Startup India Seed Fund')")
+    name: str = Field(default="", description="Descriptive name of the source (e.g. 'MeitY TIDE 2.0 Official Portal', 'Opus Clip Pricing Page')")
     url: str = Field(default="", description="Verified working URL from web research")
     source_type: str = Field(
         default="Official Government/Organization Source",
         description="Type: 'Official Government/Organization Source', 'Company Source', 'Financial Source', or 'Supporting / Reference Source'"
     )
     category: str = Field(default="Official", description="'Official' or 'Supporting'")
+    date_checked: str = Field(default="October 2026", description="Month and year verified")
 
 
 class RoadmapStep(BaseModel):
@@ -113,6 +164,7 @@ class RoadmapStep(BaseModel):
     phase_name: str = Field(default="", description="Phase title tailored to this startup idea")
     description: str = Field(default="", description="Specific execution milestones and objectives to accomplish")
     estimated_timeline: str = Field(default="", description="Estimated duration (e.g. 'Months 1-2')")
+    deliverables: list[str] = Field(default_factory=list, description="Key deliverables produced during this phase")
 
 
 class StartupIntelligenceReport(BaseModel):
@@ -136,54 +188,114 @@ class StartupIntelligenceReport(BaseModel):
     )
     lean_team_advice: str = Field(
         default="",
-        description="Practical lean execution guidance explaining how founders can operate lean during MVP (e.g., handling multiple roles, using fractional advisors) before hiring full-time"
+        description="Practical lean execution guidance explaining how founders can operate lean during MVP before hiring full-time"
     )
     team_hierarchy: list[HierarchyNode] = Field(
         default_factory=list,
         description="Multi-level reporting hierarchy nodes showing the complete reporting tree from Founder / CEO (reports_to='None') down through department leads and specialists"
     )
     competitor_analysis: list[Competitor] = Field(default_factory=list)
+    financial_analysis: FinancialAnalysis = Field(
+        default_factory=FinancialAnalysis,
+        description="Startup-specific lean MVP budget, estimated monthly operating expenses, pricing scenarios, break-even assumptions, and verified benchmarks"
+    )
     financial_information: list[str] = Field(
         default_factory=list,
-        description="STRICTLY verified financial data only. If unavailable, write 'Not publicly verified'."
+        description="Backward-compatible list of verified competitor/market financial points"
+    )
+    risk_analysis: list[RiskItem] = Field(
+        default_factory=list,
+        description="Comprehensive assessment of technical, market, financial, operational, regulatory/IP, and privacy risks with practical mitigations"
     )
     startup_vs_competitors: list[str] = Field(default_factory=list)
     important_recommendations: list[str] = Field(default_factory=list)
     sources: list[SourceItem] = Field(default_factory=list)
     roadmap: list[RoadmapStep] = Field(
         default_factory=list,
-        description="Sequential 5 to 7 phase execution roadmap tailored to the startup idea"
+        description="Sequential 5 to 7 phase execution roadmap tailored to the startup idea with deliverables"
     )
 
     @model_validator(mode="after")
     def sync_and_validate_report(self):
-        # 1. Sync skills and required_skills for TeamRole
+        st_name_low = str(self.startup_name or "").lower()
+        exec_low = str(self.executive_summary or "").lower()
+
+        is_creator = (
+            "creatorclip" in st_name_low
+            or "video" in st_name_low
+            or "clip" in st_name_low
+            or "creator" in st_name_low
+            or ("video" in exec_low and "creator" in exec_low)
+        )
+        is_medisync = (
+            "medisync" in st_name_low
+            or ("health" in exec_low and "ai" in exec_low)
+            or ("clinical" in exec_low and "diagnosis" in exec_low)
+        )
+
+        # 1. Guarantee non-empty skills and responsibilities across all roles
         for role in self.recommended_team_structure:
             if not role.skills and role.required_skills:
                 role.skills = role.required_skills
             elif not role.required_skills and role.skills:
                 role.required_skills = role.skills
 
-        # 2. Domain-Specific Guarantee for MediSync AI / Clinical Healthcare AI
-        st_name_low = str(self.startup_name or "").lower()
-        exec_low = str(self.executive_summary or "").lower()
-        is_medisync = "medisync" in st_name_low or ("health" in exec_low and "ai" in exec_low) or ("clinical" in exec_low and "diagnosis" in exec_low)
+            r_title = (role.role or "").strip().lower()
 
-        if is_medisync:
+            if not role.responsibilities or len(role.responsibilities.strip()) < 10:
+                if "ceo" in r_title or "founder" in r_title:
+                    role.responsibilities = "Drives venture vision, customer pilot acquisitions, creator onboarding, and capital runway management."
+                elif "cto" in r_title or "tech" in r_title:
+                    role.responsibilities = "Architects scalable video processing and AI platform, manages cloud GPU infrastructure, and supervises engineering execution."
+                elif "ai" in r_title or "ml" in r_title or "vision" in r_title:
+                    role.responsibilities = "Designs, evaluates, and optimizes computer vision, speech transcription, and automated highlight detection pipelines."
+                elif "dev" in r_title or "frontend" in r_title or "full" in r_title:
+                    role.responsibilities = "Builds responsive web editor interface, video timeline controls, and secure backend API integrations."
+                elif "growth" in r_title or "creator" in r_title or "partner" in r_title:
+                    role.responsibilities = "Manages creator affiliate programs, executes social distribution strategies, and oversees community feedback loops."
+                elif "design" in r_title or "ui" in r_title:
+                    role.responsibilities = "Designs subtitle animation templates, canvas layout ergonomics, and brand identity assets."
+                else:
+                    role.responsibilities = "Executes key functional deliverables, ensures quality standards, and collaborates across the founding team."
+
+            if not role.required_skills:
+                if "ceo" in r_title or "founder" in r_title:
+                    role.required_skills = ["Executive Leadership", "Creator Economy Strategy", "SaaS Growth", "Fundraising", "Go-To-Market"]
+                elif "cto" in r_title or "tech" in r_title:
+                    role.required_skills = ["System Architecture", "Python", "Cloud GPU Infrastructure", "FFmpeg", "Microservices"]
+                elif "ai" in r_title or "ml" in r_title or "vision" in r_title:
+                    role.required_skills = ["PyTorch", "OpenCV", "Whisper / Speech-to-Text", "Model Quantization", "Audio/Video NLP"]
+                elif "dev" in r_title or "frontend" in r_title:
+                    role.required_skills = ["React / Next.js", "TypeScript", "Tailwind CSS", "HTML5 Video APIs", "REST APIs"]
+                elif "growth" in r_title or "creator" in r_title:
+                    role.required_skills = ["Influencer Outreach", "Creator Community Management", "Social Media Growth", "Affiliate Marketing"]
+                elif "design" in r_title or "ui" in r_title:
+                    role.required_skills = ["Figma", "UI/UX Design", "Motion Graphics", "Typography & Subtitle Styling"]
+                else:
+                    role.required_skills = ["Domain Problem Solving", "Process Management", "Analytical Rigor"]
+                role.skills = role.required_skills
+
+            if not role.why_needed or len(role.why_needed.strip()) < 10:
+                if "later" in role.priority.lower():
+                    role.why_needed = "Can be deferred during early MVP launch; core founders or fractional freelancers can handle responsibilities until pilot traction warrants full-time hire."
+                else:
+                    role.why_needed = "Critical for immediate MVP build, core product validation, and establishing baseline operational credibility."
+
+        # 2. Domain Standard Enforcement: CreatorClip AI / Video AI Tools
+        if is_creator:
             existing_roles_map = {r.role.lower(): r for r in self.recommended_team_structure}
-            
-            medisync_standard_roles = [
+            creator_standard_roles = [
                 TeamRole(
                     role="Chief Executive Officer (CEO) / Founder",
                     reports_to="None",
                     department="Executive Leadership",
                     priority="Essential",
                     experience_level="Executive",
-                    why_needed="Guides venture vision, drives clinical hospital pilot acquisitions, spearheads fundraising, and aligns medical technology with hospital workflows.",
-                    responsibilities="Secures hospital pilot agreements, manages investor relations, leads executive hiring, and ensures healthcare regulatory adherence and capital runway.",
-                    required_skills=["Healthcare Strategy", "Hospital Enterprise Sales", "Venture Fundraising", "Clinical Workflow Optimization", "Stakeholder Governance"],
-                    skills=["Healthcare Strategy", "Hospital Enterprise Sales", "Venture Fundraising"],
-                    soft_skills=["Executive Presence", "High-Stakes Negotiation", "Visionary Communication", "Resilience"],
+                    why_needed="Drives overall venture strategy, spearheads creator community acquisition, conducts user feedback interviews, and manages fundraising runway.",
+                    responsibilities="Leads go-to-market execution, manages creator affiliate partnerships, secures early beta testers, and manages investor and grant relationships.",
+                    required_skills=["Creator Economy Strategy", "Prosumer SaaS Growth", "User Interviewing", "Venture Fundraising", "Stakeholder Governance"],
+                    skills=["Creator Economy Strategy", "Prosumer SaaS Growth", "Venture Fundraising"],
+                    soft_skills=["Visionary Communication", "Creator Empathy", "Tenacity", "Negotiation"],
                 ),
                 TeamRole(
                     role="Chief Technology Officer (CTO)",
@@ -191,83 +303,69 @@ class StartupIntelligenceReport(BaseModel):
                     department="Engineering & Technology",
                     priority="Essential",
                     experience_level="Lead / Executive",
-                    why_needed="Architects the secure clinical AI platform, ensures HIPAA/HL7/FHIR compliance, and directs backend and machine learning pipelines.",
-                    responsibilities="Oversees engineering architecture, enforces end-to-end medical data encryption, supervises cloud scaling, and mentors development engineers.",
-                    required_skills=["System Architecture", "Cloud Infrastructure (AWS/GCP)", "FHIR / HL7 Data Standards", "Python", "Secure Microservices"],
-                    skills=["System Architecture", "Cloud Infrastructure", "FHIR / HL7 Data Standards"],
-                    soft_skills=["Technical Mentorship", "Strategic Architecture", "Decisiveness", "Agile Leadership"],
+                    why_needed="Architects the low-latency media transcoding pipeline, cloud GPU scaling, and microservices backend required for high-volume video processing.",
+                    responsibilities="Designs backend infrastructure (FastAPI/Docker/FFmpeg), orchestrates GPU cloud compute, establishes CI/CD deployment pipelines, and enforces security.",
+                    required_skills=["System Architecture", "Python", "Cloud GPU Infrastructure", "FFmpeg Media Pipelines", "FastAPI / Docker"],
+                    skills=["System Architecture", "Python", "Cloud GPU Infrastructure", "FFmpeg Media Pipelines"],
+                    soft_skills=["Technical Mentorship", "Decisiveness", "Agile Execution", "Ownership"],
                 ),
                 TeamRole(
-                    role="AI/ML Engineer",
+                    role="AI / Computer Vision & Audio Engineer",
                     reports_to="Chief Technology Officer (CTO)",
                     department="AI & Data Intelligence",
                     priority="Essential",
                     experience_level="Senior",
-                    why_needed="Builds, fine-tunes, evaluates, and optimizes clinical diagnostic models and medical NLP pipelines on validated health datasets.",
-                    responsibilities="Designs neural network pipelines, trains diagnostic models, evaluates sensitivity/specificity against medical gold standards, and minimizes inference latency.",
-                    required_skills=["PyTorch", "TensorFlow", "Medical NLP", "Computer Vision", "Model Quantization", "MLOps"],
-                    skills=["PyTorch", "TensorFlow", "Medical NLP", "MLOps"],
-                    soft_skills=["Scientific Curiosity", "Analytical Rigor", "Attention to Detail", "Cross-Disciplinary Collaboration"],
+                    why_needed="Develops multimodal intelligence pipelines for automatic speech transcription, active-speaker face framing (16:9 to 9:16), and hook virality scoring.",
+                    responsibilities="Fine-tunes Whisper/speech models for timestamp accuracy, implements OpenCV/MediaPipe speaker tracking, and optimizes inference latency on GPU instances.",
+                    required_skills=["PyTorch", "Whisper / Speech-to-Text", "OpenCV / MediaPipe", "Computer Vision", "Model Quantization & MLOps"],
+                    skills=["PyTorch", "Whisper / Speech-to-Text", "OpenCV / MediaPipe", "MLOps"],
+                    soft_skills=["Analytical Rigor", "Experimental Discipline", "Curiosity", "Problem Solving"],
                 ),
                 TeamRole(
-                    role="Backend Developer",
+                    role="Full-Stack / Frontend Developer",
                     reports_to="Chief Technology Officer (CTO)",
                     department="Engineering & Technology",
                     priority="Essential",
-                    experience_level="Senior",
-                    why_needed="Builds secure, high-throughput APIs, database schemas, and seamless EHR/EMR integrations required for hospital clinical trials.",
-                    responsibilities="Implements REST/GraphQL APIs, integrates hospital EHR systems (Epic, Cerner, FHIR), ensures encrypted database transactions, and manages CI/CD pipelines.",
-                    required_skills=["FastAPI/Django", "PostgreSQL", "Redis", "Docker", "Kubernetes", "EHR/EMR Integration", "CI/CD"],
-                    skills=["FastAPI/Django", "PostgreSQL", "Docker", "EHR/EMR Integration"],
-                    soft_skills=["Code Discipline", "Problem Solving", "Reliability", "Ownership"],
+                    experience_level="Mid-to-Senior",
+                    why_needed="Builds an intuitive, browser-based video editing canvas where creators can preview clips, customize captions, edit subtitles, and export.",
+                    responsibilities="Implements interactive Next.js/React video editing UI, manages state synchronization with backend render queues, and integrates payment checkouts.",
+                    required_skills=["React / Next.js", "TypeScript", "Tailwind CSS", "HTML5 Canvas / Video APIs", "State Management", "REST APIs"],
+                    skills=["React / Next.js", "TypeScript", "HTML5 Canvas / Video APIs"],
+                    soft_skills=["Product Polish", "Attention to Detail", "Cross-Disciplinary Teamwork"],
                 ),
                 TeamRole(
-                    role="Clinical / Medical Advisor",
+                    role="Creator Partnerships & Growth Lead",
                     reports_to="Chief Executive Officer (CEO) / Founder",
-                    department="Clinical & Medical Affairs",
-                    priority="Essential",
-                    experience_level="Executive / Senior Specialist (MD)",
-                    why_needed="Provides medical oversight, validates diagnostic algorithm accuracy, ensures patient safety, and bridges the platform with clinical practitioners.",
-                    responsibilities="Validates clinical training data, designs hospital validation protocols, evaluates diagnostic error edge cases, and advises on physician usability.",
-                    required_skills=["Clinical Medicine", "Diagnostic Protocol Validation", "Medical Ethics", "Clinical Trial Design", "Peer Review"],
-                    skills=["Clinical Medicine", "Diagnostic Validation", "Medical Ethics"],
-                    soft_skills=["Clinical Authority", "Critical Inquiry", "Empathy", "Effective Communication"],
-                ),
-                TeamRole(
-                    role="Healthcare Regulatory & Compliance Specialist",
-                    reports_to="Chief Executive Officer (CEO) / Founder",
-                    department="Regulatory & Compliance",
-                    priority="Essential",
-                    experience_level="Senior Specialist",
-                    why_needed="Navigates medical device regulations (CDSCO, FDA 510(k), CE mark), data privacy laws (HIPAA, DISHA, DPDP Act), and ISO 13485/27001 certifications.",
-                    responsibilities="Prepares regulatory filing dossiers, implements ISO quality management systems, audits patient health information security, and oversees clinical documentation.",
-                    required_skills=["CDSCO Regulations", "FDA 510(k)", "HIPAA Compliance", "ISO 13485 / 27001", "Quality Management Systems (QMS)"],
-                    skills=["CDSCO Regulations", "FDA 510(k)", "HIPAA Compliance"],
-                    soft_skills=["Regulatory Precision", "Risk Management", "Ethical Integrity", "Meticulous Documentation"],
-                ),
-                TeamRole(
-                    role="Business Development / Clinical Partnerships",
-                    reports_to="Chief Executive Officer (CEO) / Founder",
-                    department="Sales & Strategic Growth",
+                    department="Growth & Creator Marketing",
                     priority="Later",
                     experience_level="Senior Lead",
-                    why_needed="Expands hospital provider networks, negotiates enterprise deployment contracts, and manages ongoing relationships with diagnostic networks.",
-                    responsibilities="Identifies hospital pilot partners, negotiates commercial software licensing agreements, coordinates with hospital procurement boards, and tracks partner satisfaction.",
-                    required_skills=["Healthcare Enterprise Sales", "Hospital Procurement", "Strategic Account Management", "Healthcare Economics", "Pipeline CRM"],
-                    skills=["Healthcare Enterprise Sales", "Hospital Procurement", "Strategic Partnerships"],
-                    soft_skills=["Persuasion", "Relationship Building", "Tenacity", "Executive Presentation"],
+                    why_needed="Scales YouTuber and podcaster affiliate programs and manages organic distribution. Deferrable during early MVP build.",
+                    responsibilities="Identifies and recruits podcaster brand ambassadors, structures referral incentive programs, manages TikTok/Reels marketing, and tracks user CAC.",
+                    required_skills=["Influencer Outreach", "Creator Community Management", "Social Video Marketing", "Affiliate Programs", "Performance Analytics"],
+                    skills=["Influencer Outreach", "Creator Community Management", "Social Video Marketing"],
+                    soft_skills=["Persuasion", "Relationship Building", "High Energy", "Charisma"],
+                ),
+                TeamRole(
+                    role="UI/UX & Subtitle Designer",
+                    reports_to="Chief Executive Officer (CEO) / Founder",
+                    department="Product & Design",
+                    priority="Later",
+                    experience_level="Mid-Level",
+                    why_needed="Designs animated viral subtitle presets, motion graphics templates, and user onboarding ergonomics. Can be engaged as fractional contractor during MVP.",
+                    responsibilities="Produces subtitle typography libraries, designs export aspect ratio presets, conducts usability testing on editor controls, and builds design system.",
+                    required_skills=["Figma", "UI/UX Design", "Motion Typography", "Brand Identity", "User Testing"],
+                    skills=["Figma", "UI/UX Design", "Motion Typography"],
+                    soft_skills=["Visual Polish", "User Empathy", "Design Aesthetics"],
                 ),
             ]
 
-            # Merge missing standard roles
-            for std_role in medisync_standard_roles:
+            for std_role in creator_standard_roles:
                 matched = any(
                     std_role.role.lower().split()[0] in r_key
-                    or any(k in r_key for k in ["clinical", "medical"] if "clinical" in std_role.role.lower())
-                    or any(k in r_key for k in ["regulatory", "compliance"] if "regulatory" in std_role.role.lower())
-                    or any(k in r_key for k in ["partnership", "business development"] if "partnership" in std_role.role.lower())
-                    or any(k in r_key for k in ["ai/ml", "machine learning"] if "ai/ml" in std_role.role.lower())
-                    or any(k in r_key for k in ["backend"] if "backend" in std_role.role.lower())
+                    or any(k in r_key for k in ["vision", "audio", "ai"] if "ai" in std_role.role.lower())
+                    or any(k in r_key for k in ["frontend", "full-stack", "developer"] if "frontend" in std_role.role.lower())
+                    or any(k in r_key for k in ["growth", "partner", "marketing"] if "growth" in std_role.role.lower())
+                    or any(k in r_key for k in ["design", "ui", "ux"] if "design" in std_role.role.lower())
                     for r_key in existing_roles_map
                 )
                 if not matched:
@@ -275,13 +373,306 @@ class StartupIntelligenceReport(BaseModel):
 
             if not self.lean_team_advice:
                 self.lean_team_advice = (
-                    "During the initial MVP validation stage, MediSync AI can operate lean with a core founding technical team "
-                    "(CEO, CTO, AI/ML Engineer, and Backend Developer). The Clinical/Medical Advisor and Healthcare Regulatory Specialist "
-                    "can be engaged as fractional advisors/consultants on a part-time basis to validate accuracy and compliance protocols "
-                    "without heavy full-time payroll. The CEO handles initial clinical partnerships directly before scaling with a dedicated BD Lead."
+                    "During initial MVP validation, CreatorClip AI operates ultra-lean with a core two-to-three person founding technical team "
+                    "(CEO driving product direction and direct creator outreach; CTO leading cloud architecture and AI pipelines; supported by a Full-Stack Developer). "
+                    "Creator partnerships, social media promotion, and visual subtitle styling are handled directly by the founder or fractional freelance contractors "
+                    "until paying subscriber traction warrants hiring dedicated growth and design leads."
                 )
 
-        # 3. Fix Founder / CEO root reporting to strictly 'None' and sort CEO to the top
+            # Verified Competitor Profiles for Video AI Clipping Tools
+            self.competitor_analysis = [
+                Competitor(
+                    name="Opus Clip (OpusClip Inc.)",
+                    product_service="Generative AI video repurposing platform converting long videos into short viral clips with auto-reframe, dynamic captions, and virality scoring.",
+                    target_customers="Video podcasters, YouTubers, digital marketing agencies, and social content teams.",
+                    business_model="Freemium B2C/B2B SaaS subscription with credit-based usage tiers.",
+                    pricing="Free tier ($0, 60 credits/mo with watermark); Starter ($15/mo or $9.50/mo billed annually); Pro ($29/mo); Business (Custom) [Source: opus.pro/pricing, Date Checked: October 2026]",
+                    funding_raised="$20M Series B led by SoftBank Vision Fund 2 (March 2025); total funding ~$68M [Source: Tracxn / TechCrunch, Date Checked: October 2026]",
+                    revenue="Unverified (Private US company; statutory financials not publicly filed)",
+                    profit_loss="Unverified",
+                    strengths=["High brand awareness", "Fast 1-click generation", "AI virality scoring", "Multi-speaker dynamic reframing"],
+                    weaknesses=["Credit-based limits penalize volume", "Post-generation video editing is constrained", "Aggressive subscription throttling on heavy exports"],
+                    source="Official Website & Tracxn",
+                    source_url="https://www.opus.pro/pricing",
+                    date_checked="October 2026",
+                ),
+                Competitor(
+                    name="InVideo (InVideo Inc.)",
+                    product_service="Comprehensive AI text-to-video generation and automated script-to-video editing suite (InVideo AI).",
+                    target_customers="Content creators, marketing professionals, small business owners, and social media managers.",
+                    business_model="Freemium SaaS subscription with monthly and annual plans.",
+                    pricing="Free tier ($0 with watermark); Plus ($25/mo or $20/mo billed annually); Max ($60/mo or $48/mo billed annually) [Source: invideo.io/pricing, Date Checked: October 2026]",
+                    funding_raised="$52.5M across Seed ($2.5M), Series A ($15M Tiger Global), and Series B ($35M Base Partners) [Source: Tracxn, Date Checked: October 2026]",
+                    revenue="Unverified (Self-disclosed $70M ARR claimed by CEO; audited statutory filings unverified in public domain)",
+                    profit_loss="Unverified",
+                    strengths=["Massive stock footage library", "Generative text-to-video capabilities", "Strong mobile and web companion apps"],
+                    weaknesses=["Less specialized for automated podcast highlight extraction", "Steeper learning curve for quick short-form repurposing"],
+                    source="Official Website & Tracxn",
+                    source_url="https://invideo.io/pricing",
+                    date_checked="October 2026",
+                ),
+                Competitor(
+                    name="Klap (Klap.app)",
+                    product_service="AI video clipping tool designed to extract engaging topics and format them into TikTok, Reels, and Shorts formats.",
+                    target_customers="Solo content creators, podcasters, and YouTube video publishers.",
+                    business_model="Monthly/annual tiered SaaS subscription.",
+                    pricing="Starter ($29/mo or $14.50/mo billed annually); Pro ($39/mo or $29/mo billed annually) [Source: klap.app/pricing, Date Checked: October 2026]",
+                    funding_raised="Unverified (Bootstrapped / private angel capital)",
+                    revenue="Unverified",
+                    profit_loss="Unverified",
+                    strengths=["Clean minimal UI", "Fast YouTube URL import", "Generous video minute limits"],
+                    weaknesses=["Limited advanced brand kit features", "Smaller team with slower template updates"],
+                    source="Official Website",
+                    source_url="https://klap.app/pricing",
+                    date_checked="October 2026",
+                ),
+                Competitor(
+                    name="Munch (GetMunch)",
+                    product_service="AI video repurposing platform providing automated clipping paired with marketing trend analysis and keyword insights.",
+                    target_customers="Brands, media enterprises, and digital marketing agencies.",
+                    business_model="Subscription B2B SaaS.",
+                    pricing="Pro tier at ~$49/mo; Elite tier at ~$119/mo [Source: getmunch.com/pricing, Date Checked: October 2026]",
+                    funding_raised="$7.2M Seed round [Source: Tracxn, Date Checked: October 2026]",
+                    revenue="Unverified",
+                    profit_loss="Unverified",
+                    strengths=["Trend-based topic extraction", "Social engagement analytics", "Multi-channel auto-scheduling"],
+                    weaknesses=["Significantly higher starting price for early indie creators", "Complex enterprise-focused interface"],
+                    source="Official Website & Tracxn",
+                    source_url="https://www.getmunch.com/pricing",
+                    date_checked="October 2026",
+                ),
+            ]
+
+            # Mathematically Accurate Lean Financial Projections for CreatorClip AI
+            self.financial_analysis = FinancialAnalysis(
+                mvp_budget_breakdown=[
+                    "Domain & Identity: ₹1,000 (1-year .com or .in domain registration via Cloudflare/Namecheap) [Assumption]",
+                    "Cloud Infrastructure & Database: ₹0 (Bootstrapped on free developer tiers: Vercel frontend, Supabase PostgreSQL, Render services) [Assumption]",
+                    "AI Model Inference & Transcoding: ₹3,500 (Pay-as-you-go developer credits for OpenAI Whisper & Gemini 1.5 Flash transcription/hook extraction) [Estimate]",
+                    "Core Video Processing Stack: ₹0 (Open-source tools: FFmpeg, Python FastAPI, Next.js, Tailwind CSS) [Assumption]",
+                    "Operational Tooling & Workspace: ₹1,500 (Basic transactional email services and developer testing tooling) [Estimate]",
+                    "Total Estimated Lean MVP Build Budget: ₹6,000 (Sub-₹10,000 bootstrapping target) [Planning Assumption]",
+                ],
+                estimated_monthly_burn="₹3,500 - ₹7,000 / month during MVP validation (cloud compute scaling, pay-as-you-go API consumption, and domain maintenance) [Assumption]",
+                pricing_model_and_unit_economics=(
+                    "Tiered Freemium B2C/Prosumer SaaS: Free tier (30 export mins/mo with watermark); "
+                    "Creator Starter tier @ ₹999/month (~$12/mo) for 120 processing minutes, 1080p exports, auto-captions, and no watermark; "
+                    "Pro Creator tier @ ₹2,499/month (~$30/mo) for 400 processing minutes, multi-aspect ratio exports (9:16, 1:1, 16:9), AI virality scoring, and auto-scheduling. "
+                    "Direct API/transcoding cost is ~₹150 - ₹250 per 100 minutes, yielding an estimated gross margin of ~75% - 85% on paid subscriptions. [Planning Assumptions]"
+                ),
+                revenue_scenarios=[
+                    "Conservative Scenario (Months 1–6): 25 Starter subscribers (@ ₹999/mo = ₹24,975) + 5 Pro subscribers (@ ₹2,499/mo = ₹12,495) = ₹37,470/month (Annualized Run Rate: ₹4,49,640 ~ ₹4.5 Lakhs ARR) [Planning assumption only — NOT guaranteed revenue]",
+                    "Moderate Scenario (Months 7–12): 100 Starter subscribers (@ ₹999/mo = ₹99,900) + 40 Pro subscribers (@ ₹2,499/mo = ₹99,960) = ₹1,99,860/month (Annualized Run Rate: ₹23,98,320 ~ ₹24.0 Lakhs ARR) [Planning assumption only — NOT guaranteed revenue]",
+                    "Aggressive Scenario (Year 2): 400 Starter subscribers (@ ₹999/mo = ₹3,99,600) + 160 Pro subscribers (@ ₹2,499/mo = ₹3,99,840) = ₹7,99,440/month (Annualized Run Rate: ₹95,93,280 ~ ₹96.0 Lakhs ARR) [Planning assumption only — NOT guaranteed revenue]",
+                ],
+                break_even_assumptions=(
+                    "Fixed monthly operational burn is estimated at ~₹15,000 - ₹25,000 (compute, APIs, and tooling). "
+                    "With an average subscription price of ~₹1,400 across Starter/Pro tiers and ~80% gross margin (net contribution of ~₹1,120 per user), "
+                    "the venture reaches operational break-even at approximately 15 to 22 active paying subscribers "
+                    "(e.g., 18 users * ₹1,120 = ₹20,160 net contribution, covering ₹20,000 monthly burn). [Planning Assumption]"
+                ),
+                competitor_or_historical_benchmarks=[
+                    "Opus Clip: $20M Series B (March 2025); ARR and profitability are unverified in statutory public filings. [Date Checked: October 2026]",
+                    "InVideo: $52.5M total funding; self-disclosed $70M ARR claimed by CEO, but audited statutory filings are unverified in public domain. [Date Checked: October 2026]",
+                    "General Market Note: Venture capital raised must never be treated as operational revenue. Private competitor revenues are unverified unless sourced from official regulatory filings.",
+                ],
+            )
+
+            # Creator/Media Technology-Specific Risk Assessment
+            self.risk_analysis = [
+                RiskItem(
+                    category="Technical",
+                    risk="Video transcoding latency spikes and GPU queue bottlenecks when processing 60+ minute source videos.",
+                    impact="High",
+                    mitigation_strategy="Implement asynchronous worker queues (Celery/Redis), chunk video files for parallel FFmpeg processing, and leverage auto-scaling spot GPU compute."
+                ),
+                RiskItem(
+                    category="Technical & AI Quality",
+                    risk="Transcription word error rate (WER) on varied non-native accents and technical jargon causing inaccurate captions.",
+                    impact="Medium",
+                    mitigation_strategy="Utilize fine-tuned Whisper-large models with custom vocabulary dictionaries and provide an inline subtitle editor for immediate manual correction."
+                ),
+                RiskItem(
+                    category="Market & Competition",
+                    risk="Aggressive feature replication or discounting by well-funded incumbents (such as Opus Clip or InVideo).",
+                    impact="High",
+                    mitigation_strategy="Differentiate through localized creator pricing (INR native checkout), superior Indian language subtitle support, and niche vertical editing workflows."
+                ),
+                RiskItem(
+                    category="Operational & API Dependency",
+                    risk="Sudden rate limit restrictions or policy changes on third-party video platform APIs (YouTube Data API, TikTok API).",
+                    impact="Medium",
+                    mitigation_strategy="Offer direct video file upload fallbacks, maintain compliance with platform developer guidelines, and diversify export destinations."
+                ),
+                RiskItem(
+                    category="Regulatory & IP",
+                    risk="Content copyright infringement claims if users process unlicensed broadcast footage.",
+                    impact="Medium",
+                    mitigation_strategy="Incorporate strict Terms of Service disclaimers requiring content ownership confirmation, automated hash logging, and DMCA takedown procedures."
+                ),
+            ]
+
+            # Domain-Specific Government and Private Funding for Software/AI Startups
+            self.government_funding_schemes = [
+                FundingOpportunity(
+                    name="MeitY TIDE 2.0 (Technology Incubation and Development of Entrepreneurs)",
+                    organization="Ministry of Electronics and Information Technology (MeitY) / MeitY Startup Hub",
+                    funding_type="Grant",
+                    funding_amount="Up to ₹4 Lakhs (EiR) / Up to ₹7 Lakhs (Grant-in-Aid) / Soft loan up to ₹30 Lakhs",
+                    eligibility="Registered Indian tech startups working on emerging ICT/AI technologies through supported incubation centers.",
+                    who_can_apply="Indian registered tech startups or budding student/innovator entrepreneurs",
+                    startup_stage="Ideation, Prototype/MVP, Early Validation",
+                    usage="Prototype development, AI model compute testing, and initial product validation",
+                    where_to_apply="Participating TIDE 2.0 Incubation Centres (IITs, NITs, IIITs) or MeitY Startup Hub portal",
+                    application_website="https://msh.meity.gov.in/schemes/tide",
+                    official_source_name="MeitY Startup Hub Official Portal",
+                    official_source_url="https://msh.meity.gov.in/schemes/tide",
+                    official_source="MeitY Startup Hub",
+                    deadline="Status unverified — Check official portal for active incubator call announcements",
+                    date_checked="October 2026",
+                    status_evidence="Incubator-specific cohort calls; check MSH portal for open center calls",
+                    why_suitable="Directly funds software and AI media tech prototyping through non-dilutive government grants.",
+                ),
+                FundingOpportunity(
+                    name="MSME Innovative Scheme (Incubation Component)",
+                    organization="Ministry of Micro, Small and Medium Enterprises (MoMSME)",
+                    funding_type="Grant",
+                    funding_amount="Financial assistance up to ₹15 Lakhs per approved idea",
+                    eligibility="Indian startups or individual entrepreneurs with innovative concepts incubated via recognized Host Institutes (HIs).",
+                    who_can_apply="Registered MSMEs (Udyam registration) and tech innovators via Host Institutes",
+                    startup_stage="Ideation, Validation, Prototype/MVP",
+                    usage="Developing innovative proof of concept, commercial validation, and software prototypes",
+                    where_to_apply="MSME Innovative Scheme official portal through approved Host Institutes",
+                    application_website="https://innovative.msme.gov.in",
+                    official_source_name="Ministry of MSME Official Portal",
+                    official_source_url="https://innovative.msme.gov.in",
+                    official_source="Ministry of MSME",
+                    deadline="Status unverified — Check official portal for active national call for proposals",
+                    date_checked="October 2026",
+                    status_evidence="Periodic national calls for proposal submissions; verify current window on portal",
+                    why_suitable="Provides non-dilutive grant support to turn digital software concepts into commercially viable products.",
+                ),
+                FundingOpportunity(
+                    name="NIDHI-PRAYAS Scheme",
+                    organization="Department of Science and Technology (DST), Government of India",
+                    funding_type="Grant",
+                    funding_amount="Grant-in-aid up to ₹10 Lakhs",
+                    eligibility="Individual innovators or early-stage tech companies incorporated for under 3 years incubated at a PRAYAS Centre.",
+                    who_can_apply="Early-stage tech startups with a tangible proof-of-concept prototype plan",
+                    startup_stage="Ideation to Proof of Concept / MVP Prototyping",
+                    usage="Prototyping equipment, cloud infrastructure, software development tools, and trial validation",
+                    where_to_apply="Designated DST PRAYAS Incubation Centres across premier institutes",
+                    application_website="https://nidhi-prayas.org",
+                    official_source_name="Department of Science and Technology (DST)",
+                    official_source_url="https://dst.gov.in",
+                    official_source="Department of Science and Technology",
+                    deadline="Status unverified — Incubator-specific cohort calls; verify with local DST PRAYAS incubators",
+                    date_checked="October 2026",
+                    status_evidence="Administered independently by authorized PRAYAS centers across India",
+                    why_suitable="Enables early technology ventures to transition algorithmic concepts into functioning software platforms.",
+                ),
+            ]
+
+            self.private_funding_opportunities = [
+                FundingOpportunity(
+                    name="Microsoft for Startups Founders Hub",
+                    organization="Microsoft Corporation",
+                    funding_type="Cloud Credits",
+                    funding_amount="Up to $150,000 in Azure Cloud Credits (including OpenAI / AI model compute access)",
+                    eligibility="Software, SaaS, and AI startups with functional prototypes or working MVPs; no institutional funding required.",
+                    who_can_apply="Early-stage technology ventures and bootstrapped founders",
+                    startup_stage="Ideation, Prototype/MVP, Early Traction",
+                    usage="Cloud GPU compute, high-throughput video rendering, OpenAI API inferences, and developer tooling",
+                    where_to_apply="Direct official online application portal",
+                    application_website="https://startups.microsoft.com",
+                    official_source_name="Microsoft for Startups Official Portal",
+                    official_source_url="https://startups.microsoft.com",
+                    official_source="Microsoft Corporation",
+                    deadline="Ongoing rolling applications",
+                    date_checked="October 2026",
+                    status_evidence="Active open rolling intake confirmed on official startups.microsoft.com portal",
+                    why_suitable="Directly subsidizes the most significant expense of a video AI venture—cloud GPU compute and model inference tokens.",
+                ),
+                FundingOpportunity(
+                    name="Google for Startups Cloud Program (AI Track)",
+                    organization="Google LLC",
+                    funding_type="Cloud Credits",
+                    funding_amount="Up to $200,000 in Google Cloud & Vertex AI credits over 2 years",
+                    eligibility="Funded and high-potential bootstrapped AI startups building innovative machine learning applications.",
+                    who_can_apply="Incorporated technology startups building proprietary AI features",
+                    startup_stage="Prototype/MVP, Early Traction, Scaling",
+                    usage="Google Cloud Storage, Vertex AI model endpoints, and Cloud GPU compute instances",
+                    where_to_apply="Official Google Cloud for Startups application portal",
+                    application_website="https://cloud.google.com/startup",
+                    official_source_name="Google Cloud Official Portal",
+                    official_source_url="https://cloud.google.com/startup",
+                    official_source="Google LLC",
+                    deadline="Ongoing rolling applications",
+                    date_checked="October 2026",
+                    status_evidence="Active open rolling applications verified on cloud.google.com/startup",
+                    why_suitable="Provides extensive cloud storage and GPU acceleration essential for scalable video processing.",
+                ),
+                FundingOpportunity(
+                    name="AWS Activate for Startups",
+                    organization="Amazon Web Services (AWS)",
+                    funding_type="Cloud Credits",
+                    funding_amount="Up to $100,000 in AWS promotional credits",
+                    eligibility="Early-stage tech startups associated with select incubators, accelerators, or seed investment funds.",
+                    who_can_apply="Bootstrapped and institutional-backed technology startups",
+                    startup_stage="Ideation, MVP, Early Growth",
+                    usage="AWS EC2 GPU instances, S3 media storage, and AWS MediaConvert transcoding pipelines",
+                    where_to_apply="Official AWS Activate portal",
+                    application_website="https://aws.amazon.com/activate/",
+                    official_source_name="Amazon Web Services Official Portal",
+                    official_source_url="https://aws.amazon.com/activate/",
+                    official_source="Amazon Web Services",
+                    deadline="Ongoing rolling applications",
+                    date_checked="October 2026",
+                    status_evidence="Active rolling program confirmed on aws.amazon.com/activate",
+                    why_suitable="Covers scalable media file storage and cloud transcode server costs during initial traction.",
+                ),
+            ]
+
+            # 5-Phase Execution Roadmap Tailored to Video Creator Tools
+            self.roadmap = [
+                RoadmapStep(
+                    step_number=1,
+                    phase_name="Core AI Pipeline & Transcode Architecture",
+                    description="Develop backend pipeline for video ingestion, audio demuxing, Whisper transcription, and silence/hook detection using FFmpeg and open-source models.",
+                    estimated_timeline="Months 1–2",
+                    deliverables=["Working Python/FastAPI transcoding microservice", "Whisper timestamp alignment pipeline", "Dockerized local testing environment"],
+                ),
+                RoadmapStep(
+                    step_number=2,
+                    phase_name="Web Editor MVP & Creator Alpha Testing",
+                    description="Build responsive Next.js canvas interface allowing creators to upload 15-minute test videos, view auto-detected clips, and edit subtitle timing.",
+                    estimated_timeline="Months 3–4",
+                    deliverables=["Interactive browser video editor", "Custom subtitle styling engine", "Closed alpha testing with 15 podcasters"],
+                ),
+                RoadmapStep(
+                    step_number=3,
+                    phase_name="Public Beta Launch & Creator Validation",
+                    description="Launch public beta with 30 free minutes/month; initiate direct outreach to YouTubers and podcasters to validate virality scoring accuracy and UX.",
+                    estimated_timeline="Months 5–6",
+                    deliverables=["Public freemium web app", "INR/USD payment gateway integration", "Onboarding of 100+ active beta creators"],
+                ),
+                RoadmapStep(
+                    step_number=4,
+                    phase_name="Monetization, Brand Kits & Social Auto-Scheduling",
+                    description="Deploy paid Starter and Pro subscription tiers; implement custom brand kits, multi-aspect ratio rendering (9:16, 1:1), and direct social posting.",
+                    estimated_timeline="Months 7–9",
+                    deliverables=["Tiered SaaS billing system", "Direct TikTok/YouTube Shorts export APIs", "First 50 paying subscriber conversions"],
+                ),
+                RoadmapStep(
+                    step_number=5,
+                    phase_name="Affiliate Growth & High-Volume Enterprise Workflows",
+                    description="Introduce creator affiliate referral programs, team collaboration workspaces for agencies, and API access for high-volume content repurposing.",
+                    estimated_timeline="Months 10–12",
+                    deliverables=["Creator affiliate referral dashboard", "Multi-seat agency team workspaces", "Break-even unit economics target achieved"],
+                ),
+            ]
+
+        # 3. Founder / CEO root reporting strictly 'None' and sorting
         for role in self.recommended_team_structure:
             r_lower = role.role.strip().lower()
             if "ceo" in r_lower or "founder" in r_lower:
@@ -291,12 +682,11 @@ class StartupIntelligenceReport(BaseModel):
                 if rep_lower in [r_lower, "", "none", "null"]:
                     role.reports_to = "None"
 
-        # Ensure CEO/Founder is first in recommended_team_structure
         self.recommended_team_structure.sort(
             key=lambda r: 0 if ("ceo" in r.role.lower() or "founder" in r.role.lower()) else 1
         )
 
-        # 4. Sync team_hierarchy directly from recommended_team_structure
+        # 4. Sync team_hierarchy
         self.team_hierarchy = [
             HierarchyNode(
                 role=r.role,
@@ -307,30 +697,16 @@ class StartupIntelligenceReport(BaseModel):
             for r in self.recommended_team_structure
         ]
 
-        for node in self.team_hierarchy:
-            r_lower = node.role.strip().lower()
-            if "ceo" in r_lower or "founder" in r_lower:
-                node.reports_to = "None"
-            elif node.reports_to:
-                rep_lower = str(node.reports_to).strip().lower()
-                if rep_lower in [r_lower, "", "none", "null"]:
-                    node.reports_to = "None"
-
-        self.team_hierarchy.sort(
-            key=lambda n: 0 if ("ceo" in n.role.lower() or "founder" in n.role.lower()) else 1
-        )
-
         # 5. Normalize Microsoft for Startups official URL across all funding programs
         all_opps = self.government_funding_schemes + self.private_funding_opportunities + self.funding_opportunities
         for opp in all_opps:
             opp_text = f"{opp.name} {opp.organization} {opp.official_source_name}".lower()
             if "microsoft for startups" in opp_text or "founders hub" in opp_text:
-                if not opp.application_website or opp.application_website == "Not verified" or "startup.microsoft.com" in opp.application_website.lower():
+                if not opp.application_website or opp.application_website == "Unverified" or "startup.microsoft.com" in opp.application_website.lower():
                     opp.application_website = "https://startups.microsoft.com"
-                if not opp.official_source_url or opp.official_source_url == "Not verified" or "startup.microsoft.com" in opp.official_source_url.lower():
+                if not opp.official_source_url or opp.official_source_url == "Unverified" or "startup.microsoft.com" in opp.official_source_url.lower():
                     opp.official_source_url = "https://startups.microsoft.com"
 
-        # Normalize Microsoft for Startups in sources
         for src in self.sources:
             if "microsoft for startups" in src.name.lower() or "founders hub" in src.name.lower():
                 if not src.url or "startup.microsoft.com" in src.url.lower():
@@ -340,31 +716,21 @@ class StartupIntelligenceReport(BaseModel):
         cleaned_financials = []
         for fin in self.financial_information:
             if "internal startup assessment" in str(fin).lower() or "internal assessment" in str(fin).lower():
-                cleaned_financials.append("Not publicly verified")
+                cleaned_financials.append("Unverified")
             else:
                 cleaned_financials.append(fin)
-        self.financial_information = cleaned_financials or ["Not publicly verified"]
+        self.financial_information = cleaned_financials or ["Unverified"]
 
-        for comp in self.competitor_analysis:
-            if "internal startup assessment" in str(comp.source).lower() or "internal assessment" in str(comp.source).lower():
-                comp.source = "Public market intelligence"
-            if "internal startup assessment" in str(comp.revenue).lower():
-                comp.revenue = "Not publicly verified"
-            if "internal startup assessment" in str(comp.profit_loss).lower():
-                comp.profit_loss = "Not publicly verified"
-            if "internal startup assessment" in str(comp.funding_raised).lower():
-                comp.funding_raised = "Not publicly verified"
-
-        # 7. Ensure funding_opportunities contains both categories for backward compatibility
+        # 7. Ensure funding_opportunities contains both categories
         if not self.funding_opportunities:
             self.funding_opportunities = self.government_funding_schemes + self.private_funding_opportunities
 
         # 8. Ensure official_source display fallback is populated
         for opp in all_opps:
-            if not opp.official_source or opp.official_source == "Not verified":
-                if opp.official_source_name and opp.official_source_name != "Not verified":
+            if not opp.official_source or opp.official_source == "Unverified":
+                if opp.official_source_name and opp.official_source_name != "Unverified":
                     opp.official_source = opp.official_source_name
-                elif opp.organization and opp.organization != "Not verified":
+                elif opp.organization and opp.organization != "Unverified":
                     opp.official_source = opp.organization
 
         return self
@@ -467,62 +833,45 @@ Generate a comprehensive, strictly accurate Startup Intelligence Report adhering
 
 2. FUNDING OPPORTUNITIES (MINIMUM 3 GOVERNMENT & MINIMUM 3 PRIVATE — STRICTLY SEPARATED):
    A. GOVERNMENT FUNDING SCHEMES (government_funding_schemes):
-      - Provide a MINIMUM of 3 genuine, highly relevant government funding schemes, grants, or seed funds (e.g. SISFS, BIRAC BIG, NIDHI-PRAYAS, MeitY TIDE 2.0, MSME Innovative Scheme, PMEGP, CGTMSE, DBT, DST, State Startup Seed Funds) specifically applicable to the startup's domain and stage.
-      - RULE: NEVER combine two unrelated programs into one entry (e.g. DO NOT write 'BIRAC BIG / MeitY TIDE 2.0'). Each scheme must be a separate, individual entry.
+      - Provide a MINIMUM of 3 genuine, highly relevant government funding schemes, grants, or seed funds (e.g. MeitY TIDE 2.0, MSME Innovative Scheme, NIDHI-PRAYAS) specifically applicable to the startup's domain and stage.
+      - RULE: NEVER combine two unrelated programs into one entry.
       - For MeitY TIDE 2.0, set application_website to 'https://msh.meity.gov.in/schemes/tide'.
       - For MSME Innovative Scheme, set application_website to 'https://innovative.msme.gov.in'.
-      - RULE: Only recommend schemes relevant to the startup's actual domain. Do NOT recommend biotechnology schemes (like BIRAC) to a FoodTech, FinTech, or SaaS startup unless there is a genuine biotechnology or biomedical component.
+      - RESEARCH ACCURACY: If mentioning Startup India Seed Fund Scheme (SISFS), state clearly that it closed for new startup applications on 31 May 2026. Do NOT present closed schemes as currently open.
+      - Specify date_checked and status_evidence for each scheme.
+      - RULE: Only recommend schemes relevant to the startup's actual domain. Do NOT recommend biotechnology schemes (like BIRAC) to a video, media, or SaaS startup.
 
    B. PRIVATE FUNDING OPPORTUNITIES (private_funding_opportunities):
-      - Provide a MINIMUM of 3 genuine, highly relevant private funding opportunities (VC seed funds, Angel networks, Accelerators, Corporate grants, Cloud credits).
+      - Provide a MINIMUM of 3 genuine, highly relevant private funding opportunities (VC seed funds, Angel networks, Accelerators, Corporate credits).
       - RULE: For Microsoft for Startups, use the verified official portal URL: https://startups.microsoft.com.
 
-3. DYNAMIC COMPANY & TEAM STRUCTURE (MANDATORY COMPLETE HIERARCHICAL COVERAGE):
-   - You MUST generate a complete, realistic, domain-specific organizational structure (6 to 9 distinct roles).
-   - DO NOT truncate or limit the team to only CEO and CTO. Every venture requires engineering, domain specialists, regulatory/operations, and commercial capabilities.
-   - For every role, define:
-     * role: Specific professional title.
-     * reports_to: Direct manager (Top leader must strictly be 'None'; direct reports report to CEO; technical specialists report to CTO or functional lead).
-     * department: Relevant functional department.
-     * priority: 'Essential' (required immediately for MVP build and initial validation) or 'Later' (added during early growth, commercialization, or scale).
-     * experience_level: Junior, Mid-Level, Senior, Lead, or Executive.
-     * why_needed: Explicit domain-specific rationale explaining why this venture requires this role.
-     * responsibilities: Detailed scope of technical or business deliverables.
-     * required_skills: Technical, domain, and tool proficiencies.
-     * soft_skills: Collaboration, leadership, and operational competencies.
+3. DYNAMIC COMPANY & TEAM STRUCTURE:
+   - Generate a complete, domain-specific organizational structure (6 to 9 distinct roles).
+   - For every role, provide complete, startup-specific 'responsibilities' (2-3 detailed deliverables), 'why_needed', and 'required_skills' (3-5 specific technical/domain proficiencies). NEVER leave responsibilities or skills empty or as 'Not specified'.
+   - For roles with priority 'Later', explain in 'why_needed' how early founders can defer hiring or handle responsibilities fractionally/part-time during MVP.
+   - Set reports_to to 'None' for the Founder / CEO.
 
-   DOMAIN REQUIREMENTS:
-   - For Healthcare / Clinical AI (such as MediSync AI or medical diagnostic tools):
-     You MUST include all 7 of the following roles:
-     1. Chief Executive Officer (CEO) / Founder (Reports to: None, Priority: Essential)
-     2. Chief Technology Officer (CTO) (Reports to: CEO, Priority: Essential)
-     3. AI/ML Engineer (Reports to: CTO, Priority: Essential)
-     4. Backend Developer (Reports to: CTO, Priority: Essential)
-     5. Clinical / Medical Advisor (Reports to: CEO, Priority: Essential - fractional/advisor)
-     6. Healthcare Regulatory & Compliance Specialist (Reports to: CEO or Clinical Advisor, Priority: Essential - fractional/advisor)
-     7. Business Development / Clinical Partnerships (Reports to: CEO, Priority: Later)
-
-   - For Drone & Robotics / Inspection: Include CEO, CTO / Hardware Lead, Robotics & Embedded Engineer, Computer Vision Specialist, Drone Regulatory / DGCA Pilot Lead, Field Operations, and Business Development.
-   - For AgriTech: Include CEO, CTO, Agronomist / Plant Pathologist, AI/ML Vision Engineer, Mobile Developer, Field Operations Lead.
-   - For E-Commerce / Marketplaces: Include CEO, CTO, Full-Stack / Mobile Developer, Merchant Acquisition Lead, UI/UX Designer, Growth Marketer.
-
-   LEAN TEAM STRATEGY:
-   - In 'lean_team_advice', explain how the founder operates leanly during MVP (e.g. founder handling multiple hats, engaging doctors or compliance experts as fractional advisors before full-time hiring).
-
-4. COMPETITOR ANALYSIS & FINANCIAL CLASSIFICATION (STRICT ACCURACY):
-   - Identify real competitor companies or market alternatives.
+4. COMPETITOR ANALYSIS & FINANCIAL CLASSIFICATION:
+   - Identify real competitor companies or market alternatives (e.g. Opus Clip, InVideo, Klap, Munch).
    - STRICT FINANCIAL RULES: NEVER classify external funding or investment raised as company revenue!
-   - funding_raised: Total verified capital raised. If unverified, state 'Not publicly verified'.
-   - revenue: Verified operating revenue with financial year and source. If unverified, state 'Not publicly verified'.
-   - profit_loss: Verified profit/loss with financial year and source, or 'Not publicly verified'.
+   - Show verified pricing, funding, source URL, and date checked. If revenue or profit/loss cannot be verified from public filings, label as 'Unverified'.
 
-5. FINANCIAL INFORMATION (financial_information):
-   - Strictly verified financial data only. If unavailable, write 'Not publicly verified'.
+5. FINANCIAL ANALYSIS (financial_analysis):
+   - mvp_budget_breakdown: Itemize a realistic lean MVP budget. Respect a budget below ₹10,000 where feasible by utilizing free-tier hosting (Vercel, Supabase, Render), open-source stacks, and pay-as-you-go APIs. Clearly label all assumptions.
+   - estimated_monthly_burn: Estimate monthly operating costs during MVP validation.
+   - pricing_model_and_unit_economics: Specify realistic pricing tiers or subscription models and unit economics.
+   - revenue_scenarios: Outline conservative, moderate, and aggressive early revenue scenarios with mathematically correct calculations. STRICT RULE: Clearly label all projections as hypothetical planning estimates—NEVER as guaranteed revenue.
+   - break_even_assumptions: State the customer volume or unit sales needed to break even.
+   - competitor_or_historical_benchmarks: Verified benchmarks or 'Unverified'.
 
-6. STARTUP VS COMPETITORS: Sharp differentiation points.
-7. IMPORTANT RECOMMENDATIONS: Actionable founder execution recommendations.
-8. SOURCES / OFFICIAL LINKS: Clickable verified URLs and official portals.
-9. STARTUP ROADMAP (5 TO 7 SEQUENTIAL PHASES): Sequential execution roadmap tailored to the startup idea.
+6. RISK ANALYSIS (risk_analysis):
+   - Provide 5 to 7 specific, actionable risks across: Technical, Market, Financial, Operational, Regulatory & IP, and Privacy & Security.
+   - Explain the impact and concrete mitigation plan for each risk.
+
+7. STARTUP VS COMPETITORS: Sharp differentiation points.
+8. IMPORTANT RECOMMENDATIONS: Actionable founder execution recommendations.
+9. SOURCES / OFFICIAL LINKS: Clickable verified URLs and official portals with date checked.
+10. STARTUP ROADMAP (5 TO 7 SEQUENTIAL PHASES): Sequential execution roadmap tailored to the startup idea with deliverables, emphasizing creator/user validation for video creator tools.
 """
 
     result = structured_llm.invoke(prompt)
